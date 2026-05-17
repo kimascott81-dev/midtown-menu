@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -16,7 +15,7 @@
     --glass-border: rgba(255, 255, 255, 0.1);
     --text-primary: #ffffff;
     --text-secondary: #b0b0c0;
-    --: #ff3366;
+    --danger: #ff3366;
     --success: #00ff88;
   }
 
@@ -347,7 +346,6 @@
   </header>
 
   <main>
-    <!-- HOME -->
     <div id="view-home" class="view active">
       <div style="text-align:center; margin-top: 20px;">
         <h1 style="font-size: 2.2rem; margin-bottom: 8px;">What are we making tonight?</h1>
@@ -385,28 +383,13 @@
       </div>
     </div>
 
-    <!-- BROWSE -->
-    
-  function renderBrowse(filter) {
-  const grid = document.getElementById('browseGrid');
-  if(!grid) return;
-  const items = filter==='All' ? allDrinks : allDrinks.filter(d=>d.type===filter);
-  if(items.length===0) { grid.innerHTML='<div class="empty-state"><div class="big-emoji">🍸</div><h3>No drinks found</h3></div>'; return; }
-  grid.innerHTML = items.map(d=>{
-    const price = calculatePrice(d.ingredients); // Calculates the price
-    return `
-    <div class="item-card" onclick="openRecipe('${d.id}')">
-      <span class="item-emoji">${d.emoji}</span>
-      <div class="item-name">${d.name}</div>
-      <div class="item-meta" style="margin-bottom: 6px;">${d.type} • ${d.glass}</div>
-      <div style="color: var(--neon-lime); font-weight: 800; font-size: 0.95rem;">${price}</div>
+    <div id="view-browse" class="view">
+      <div class="section-title">📖 Drink Menu</div>
+      <div class="section-sub">Tap any drink to see the recipe</div>
+      <div class="filter-bar" id="browseFilters"></div>
+      <div class="card-grid" id="browseGrid"></div>
     </div>
-    `;
-  }).join('');
-}
 
-
-    <!-- INVENTORY -->
     <div id="view-inventory" class="view">
       <div class="section-title">🧪 Inventory</div>
       <div class="section-sub">Everything behind our bar</div>
@@ -414,7 +397,6 @@
       <div class="card-grid" id="invGrid"></div>
     </div>
 
-    <!-- CREATE -->
     <div id="view-create" class="view">
       <div class="section-title">⚗️ Drink Lab</div>
       <div class="section-sub">Craft your masterpiece</div>
@@ -426,7 +408,6 @@
         <div class="step-dot"></div>
       </div>
 
-      <!-- Step 1: Info -->
       <div id="create-step-1">
         <div class="form-group">
           <label>Drink or Shot Name</label>
@@ -448,7 +429,6 @@
         <button class="btn btn-primary" onclick="nextStep(2)">Next: Pick Ingredients →</button>
       </div>
 
-      <!-- Step 2: Ingredients -->
       <div id="create-step-2" style="display:none;">
         <div class="filter-bar" id="createFilters"></div>
         <div style="margin-bottom: 12px; color: var(--neon-lime); font-weight: 700;">
@@ -461,7 +441,6 @@
         </div>
       </div>
 
-      <!-- Step 3: Details -->
       <div id="create-step-3" style="display:none;">
         <div id="selectedIngredientsReview"></div>
         <div class="form-group" style="margin-top: 20px;">
@@ -485,7 +464,6 @@
         </div>
       </div>
 
-      <!-- Step 4: Preview -->
       <div id="create-step-4" style="display:none;">
         <div id="createPreview"></div>
         <div style="display:flex; gap:10px; margin-top: 20px;">
@@ -495,16 +473,15 @@
       </div>
     </div>
 
-    <!-- RECIPE DETAIL -->
     <div id="view-recipe" class="view">
       <div id="recipeContent"></div>
       <div class="no-print" style="display:flex; gap:10px; margin-top: 20px;">
+        <button id="editRecipeBtn" class="btn btn-gold" style="display:none;">✏️ Edit</button>
         <button class="btn btn-primary" onclick="window.print()">🖨️ Print for Bartender</button>
         <button class="btn btn-outline" onclick="showView(lastView)">← Back</button>
       </div>
     </div>
 
-    <!-- MY RECIPES -->
     <div id="view-my-recipes" class="view">
       <div class="section-title">💾 My Creations</div>
       <div class="section-sub">All your custom recipes saved on this device</div>
@@ -513,7 +490,6 @@
   </main>
 </div>
 
-<!-- Modal -->
 <div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
   <div class="modal-content">
     <div class="modal-icon" id="modalIcon">🎉</div>
@@ -528,47 +504,46 @@
 <script>
 // ================= DEBUG =================
 function debug(msg) {
+  // Console logging kept for background errors, but on-screen box disabled
   console.log(msg);
-   
 }
 
 // ================= DATA =================
-const INVENTORY = [// Example of standard vs premium items:
-{ id:'vod1', name:"Tito's Vodka", category:'Vodka', emoji:'🍸', color:'#e0e0ff' }, // Standard
-{ id:'vod2', name:'Deep Eddy’s', category:'Vodka', emoji:'🍸', color:'#d0d0ff', premium: true }, // Premium!
-{ id:'teq1', name:'Patrón Silver', category:'Tequila', emoji:'🌵', color:'#fff9c4', premium: true }, // Premium!
-
-  { id:'vod1', name:"Tito's Vodka", category:'Vodka', emoji:'🍸', color:'#e0e0ff' },//Standard
-  { id:'vod2', name:'Deep Eddys', category:'Vodka', emoji:'🍸', color:'#d0d0ff',premium:true},//Premium!
-  { id:'rum1', name:'Bacardi Superior', category:'Rum', emoji:'🥥', color:'#ffe0b0' },
-  { id:'rum2', name:'Captain Morgan', category:'Rum', emoji:'🏴‍☠️', color:'#d4a574' },
-  { id:'gin1', name:'Bombay Sapphire', category:'Gin', emoji:'🫐', color:'#c8e6c9' },
-  { id:'gin2', name:'Tanqueray', category:'Gin', emoji:'🌿', color:'#a5d6a7' },
-  { id:'teq1', name:'Patrón Silver', category:'Tequila', emoji:'🌵', color:'#fff9c4',premium:true},//Premium!
-  { id:'teq2', name:'Jose Cuervo Gold', category:'Tequila', emoji:'🌅', color:'#ffecb3' },
-  { id:'whi1', name:"Jack Daniel's", category:'Whiskey', emoji:'🥃', color:'#d7ccc8' },
-  { id:'whi2', name:'Jameson', category:'Whiskey', emoji:'☘️', color:'#c5e1a5' },
-  { id:'whi3', name:'Fireball', category:'Whiskey', emoji:'🔥', color:'#ffab91' },
-  { id:'liq1', name:'Triple Sec', category:'Liqueur', emoji:'🍊', color:'#ffe0b2' },
-  { id:'liq2', name:'Blue Curaçao', category:'Liqueur', emoji:'💎', color:'#80deea' },
-  { id:'liq3', name:'Peach Schnapps', category:'Liqueur', emoji:'🍑', color:'#ffcc80' },
-  { id:'liq4', name:'Sour Apple Pucker', category:'Liqueur', emoji:'🍏', color:'#c5e1a5' },
-  { id:'mix1', name:'Orange Juice', category:'Mixer', emoji:'🍊', color:'#ffb74d' },
-  { id:'mix2', name:'Cranberry Juice', category:'Mixer', emoji:'🫐', color:'#ef9a9a' },
-  { id:'mix3', name:'Pineapple Juice', category:'Mixer', emoji:'🍍', color:'#fff176' },
-  { id:'mix4', name:'Sour Mix', category:'Mixer', emoji:'🍋', color:'#fff59d' },
-  { id:'mix5', name:'Ginger Beer', category:'Mixer', emoji:'🫚', color:'#d7ccc8' },
-  { id:'mix6', name:'Club Soda', category:'Mixer', emoji:'💧', color:'#e1f5fe' },
-  { id:'mix7', name:'Cola', category:'Mixer', emoji:'🥤', color:'#5d4037' },
-  { id:'mix8', name:'Grenadine', category:'Mixer', emoji:'🌹', color:'#e57373' },
-  { id:'gar1', name:'Lime Wedge', category:'Garnish', emoji:'🍈', color:'#c5e1a5' },
-  { id:'gar2', name:'Cherry', category:'Garnish', emoji:'🍒', color:'#ef5350' },
-  { id:'gar3', name:'Olive', category:'Garnish', emoji:'🫒', color:'#aed581' },
-  { id:'gar4', name:'Mint Sprig', category:'Garnish', emoji:'🌿', color:'#81c784' },
-  { id:'ext1', name:'Simple Syrup', category:'Extra', emoji:'🍯', color:'#ffe082' },
-  { id:'ext2', name:'Whipped Cream', category:'Extra', emoji:'🍦', color:'#fafafa' },
-  { id:'ext3', name:'Salt Rim', category:'Extra', emoji:'🧂', color:'#eeeeee' },
-  { id:'ext4', name:'Sugar Rim', category:'Extra', emoji:'✨', color:'#fff9c4' },
+const INVENTORY = [
+  // Premium tagging example included
+  { id:'vod1', name:"Tito's Vodka", category:'Vodka', emoji:'🍸' }, 
+  { id:'vod2', name:"Deep Eddy's", category:'Vodka', emoji:'🍸', premium: true },
+  { id:'vod3', name:'Ketel One', category:'Vodka', emoji:'🍸', premium: true }, 
+  { id:'rum1', name:'Bacardi Superior', category:'Rum', emoji:'🥥' },
+  { id:'rum2', name:'Captain Morgan', category:'Rum', emoji:'🏴‍☠️' },
+  { id:'gin1', name:'Bombay Sapphire', category:'Gin', emoji:'🫐' },
+  { id:'gin2', name:'Tanqueray', category:'Gin', emoji:'🌿' },
+  { id:'teq1', name:'Patrón Silver', category:'Tequila', emoji:'🌵', premium: true },
+  { id:'teq2', name:'Jose Cuervo Gold', category:'Tequila', emoji:'🌅' },
+  { id:'whi1', name:"Jack Daniel's", category:'Whiskey', emoji:'🥃' },
+  { id:'whi2', name:'Jameson', category:'Whiskey', emoji:'☘️' },
+  { id:'whi3', name:'Fireball', category:'Whiskey', emoji:'🔥' },
+  { id:'whi4', name:'Evan Williams', category:'Whiskey', emoji:'🥃' },
+  { id:'liq1', name:'Triple Sec', category:'Liqueur', emoji:'🍊' },
+  { id:'liq2', name:'Blue Curaçao', category:'Liqueur', emoji:'💎' },
+  { id:'liq3', name:'Peach Schnapps', category:'Liqueur', emoji:'🍑' },
+  { id:'liq4', name:'Sour Apple Pucker', category:'Liqueur', emoji:'🍏' },
+  { id:'mix1', name:'Orange Juice', category:'Mixer', emoji:'🍊' },
+  { id:'mix2', name:'Cranberry Juice', category:'Mixer', emoji:'🫐' },
+  { id:'mix3', name:'Pineapple Juice', category:'Mixer', emoji:'🍍' },
+  { id:'mix4', name:'Sour Mix', category:'Mixer', emoji:'🍋' },
+  { id:'mix5', name:'Ginger Beer', category:'Mixer', emoji:'🫚' },
+  { id:'mix6', name:'Club Soda', category:'Mixer', emoji:'💧' },
+  { id:'mix7', name:'Cola', category:'Mixer', emoji:'🥤' },
+  { id:'mix8', name:'Grenadine', category:'Mixer', emoji:'🌹' },
+  { id:'gar1', name:'Lime Wedge', category:'Garnish', emoji:'🍈' },
+  { id:'gar2', name:'Cherry', category:'Garnish', emoji:'🍒' },
+  { id:'gar3', name:'Olive', category:'Garnish', emoji:'🫒' },
+  { id:'gar4', name:'Mint Sprig', category:'Garnish', emoji:'🌿' },
+  { id:'ext1', name:'Simple Syrup', category:'Extra', emoji:'🍯' },
+  { id:'ext2', name:'Whipped Cream', category:'Extra', emoji:'🍦' },
+  { id:'ext3', name:'Salt Rim', category:'Extra', emoji:'🧂' },
+  { id:'ext4', name:'Sugar Rim', category:'Extra', emoji:'✨' }
 ];
 
 const DEFAULT_DRINKS = [
@@ -621,8 +596,9 @@ let lastView = 'home';
 let allDrinks = [];
 let myRecipes = [];
 let storageAvailable = false;
+let editingRecipeId = null;
 
-// ================= STORAGE HELPER (Safe) =================
+// ================= STORAGE HELPER =================
 function safeGet(key, fallback) {
   try {
     if(!storageAvailable) return fallback;
@@ -648,7 +624,6 @@ function safeSet(key, val) {
 function init() {
   debug('App initializing...');
 
-  // Check localStorage safely
   try {
     const test = '__test__';
     localStorage.setItem(test, test);
@@ -662,7 +637,6 @@ function init() {
 
   allDrinks = safeGet('midtown_drinks', [...DEFAULT_DRINKS]);
   myRecipes = safeGet('midtown_myrecipes', []);
-  debug('Loaded '+allDrinks.length+' drinks, '+myRecipes.length+' custom recipes');
 
   // Bubbles
   const bg = document.getElementById('bgAnim');
@@ -694,8 +668,6 @@ function showView(name) {
   const target = document.getElementById('view-'+name);
   if(target) {
     target.classList.add('active');
-  } else {
-    debug('ERROR: view-'+name+' not found');
   }
   if(name!=='recipe') lastView = name;
   if(name==='my-recipes') renderMyRecipes();
@@ -756,8 +728,9 @@ function renderInventory(filter) {
   `).join('');
 }
 
-// ================= CREATE =================
+// ================= CREATE / EDIT =================
 function startCreate() {
+  editingRecipeId = null; 
   currentStep = 1;
   selectedIngredients = {};
   document.getElementById('createName').value = '';
@@ -769,6 +742,28 @@ function startCreate() {
   showStep(1);
   showView('create');
 }
+
+function editRecipe(id) {
+  const d = myRecipes.find(x => x.id === id);
+  if(!d) return;
+
+  editingRecipeId = id; 
+  
+  document.getElementById('createName').value = d.name;
+  document.getElementById('createCreator').value = d.creator;
+  document.getElementById('createType').value = d.type;
+  document.getElementById('createGlass').value = d.glass;
+  document.getElementById('createInstructions').value = d.instructions;
+
+  selectedIngredients = {};
+  d.ingredients.forEach(ing => {
+    selectedIngredients[ing.id] = ing.qty;
+  });
+
+  showStep(1);
+  showView('create');
+}
+
 function updateStepIndicator() {
   const dots = document.querySelectorAll('.step-dot');
   dots.forEach((d,i)=>{
@@ -833,8 +828,7 @@ function toggleIngredient(id) {
     delete selectedIngredients[id];
   } else {
     const item = INVENTORY.find(i=>i.id===id);
-    const qty = prompt(`How much ${item.name}?
-Examples: 1 oz, 2 oz, 0.5 oz, splash, dash, top`);
+    const qty = prompt(`How much ${item.name}?\nExamples: 1 oz, 2 oz, 0.5 oz, splash, dash, top`);
     if(qty && qty.trim()) selectedIngredients[id] = qty.trim();
   }
   renderCreateGrid(document.querySelector('#createFilters .filter-chip.active')?.textContent || 'All');
@@ -868,9 +862,6 @@ function renderPreview() {
     return `<div class="ingredient-row"><span>${it.emoji} ${it.name}</span><span class="ingredient-qty">${qty}</span></div>`;
   }).join('');
 
-  
-
-  // Calculate price for the preview
   const previewIngredients = Object.entries(selectedIngredients).map(([id,qty])=>({id,qty}));
   const price = calculatePrice(previewIngredients);
 
@@ -889,7 +880,6 @@ function renderPreview() {
       <div style="text-align:left;white-space:pre-wrap;margin-top:16px;font-size:1.1rem;line-height:1.6;">${instructions}</div>
     </div>
   `;
-
 }
 
 function saveCreation() {
@@ -899,23 +889,37 @@ function saveCreation() {
   const glass = document.getElementById('createGlass').value;
   const instructions = document.getElementById('createInstructions').value;
   const emoji = type==='Shot'?'🥃':type==='Mocktail'?'🧃':'🍸';
-
   const ingredients = Object.entries(selectedIngredients).map(([id,qty])=>({id,qty}));
 
-  const newDrink = {
-    id: 'custom_'+Date.now(),
-    name, creator, type, glass, instructions, ingredients, emoji,
-    isCustom: true
-  };
+  if (editingRecipeId) {
+    const drinkIndex = allDrinks.findIndex(d => d.id === editingRecipeId);
+    const myIndex = myRecipes.findIndex(d => d.id === editingRecipeId);
 
-  allDrinks.push(newDrink);
-  myRecipes.push(newDrink);
+    if (drinkIndex !== -1) {
+      allDrinks[drinkIndex] = { ...allDrinks[drinkIndex], name, creator, type, glass, instructions, ingredients, emoji };
+    }
+    if (myIndex !== -1) {
+      myRecipes[myIndex] = { ...myRecipes[myIndex], name, creator, type, glass, instructions, ingredients, emoji };
+    }
+    showModal('✏️', 'Recipe Updated!', `${name} has been updated successfully.`);
+  } else {
+    const newDrink = {
+      id: 'custom_'+Date.now(),
+      name, creator, type, glass, instructions, ingredients, emoji,
+      isCustom: true
+    };
+    allDrinks.push(newDrink);
+    myRecipes.push(newDrink);
+    showModal('🎉', 'Recipe Saved!', `${name} by ${creator} is now in the menu and your collection.`);
+  }
 
   safeSet('midtown_drinks', allDrinks);
   safeSet('midtown_myrecipes', myRecipes);
 
-  showModal('🎉', 'Recipe Saved!', `${name} by ${creator} is now in the menu and your collection.`);
+  editingRecipeId = null;
   renderBrowse('All');
+  renderMyRecipes();
+  showView('my-recipes');
 }
 
 // ================= RECIPE VIEW =================
@@ -929,8 +933,10 @@ function openRecipe(id) {
     return `<div class="ingredient-row"><span>${name}</span><span class="ingredient-qty">${ing.qty}</span></div>`;
   }).join('');
 
- const content = document.getElementById('recipeContent');
-   if(content) content.innerHTML = `
+  const price = calculatePrice(d.ingredients);
+
+  const content = document.getElementById('recipeContent');
+  if(content) content.innerHTML = `
     <div class="recipe-hero">
       <span class="recipe-emoji">${d.emoji}</span>
       <div class="recipe-name">${d.name}</div>
@@ -938,6 +944,7 @@ function openRecipe(id) {
       <div>
         <span class="recipe-badge">${d.type}</span>
         <span class="recipe-badge">${d.glass}</span>
+        <span class="recipe-badge" style="border-color: var(--neon-lime); color: var(--neon-lime);">${price}</span>
       </div>
       <div class="ingredient-list">${ingRows}</div>
       <div style="text-align:left;white-space:pre-wrap;margin-top:16px;font-size:1.1rem;line-height:1.6;">${d.instructions}</div>
@@ -947,6 +954,17 @@ function openRecipe(id) {
       <p style="margin:8px 0 0;color:var(--text-secondary);">Tap "Print for Bartender" below to send this to the printer.</p>
     </div>
   `;
+
+  const editBtn = document.getElementById('editRecipeBtn');
+  if(editBtn) {
+    if(d.isCustom) {
+      editBtn.style.display = 'inline-flex';
+      editBtn.onclick = () => editRecipe(d.id);
+    } else {
+      editBtn.style.display = 'none';
+    }
+  }
+
   showView('recipe');
 }
 
@@ -967,24 +985,19 @@ function renderMyRecipes() {
   }
   container.innerHTML = `
     <div class="card-grid" style="margin-top:20px;">
-      ${myRecipes.map(d=>{
-        const price = calculatePrice(d.ingredients); // Calculates the price
-        return `
+      ${myRecipes.map(d=>`
         <div class="item-card" onclick="openRecipe('${d.id}')">
           <span class="item-emoji">${d.emoji}</span>
           <div class="item-name">${d.name}</div>
-          <div class="item-meta" style="margin-bottom: 6px;">by ${d.creator}</div>
-          <div style="color: var(--neon-lime); font-weight: 800; font-size: 0.95rem;">${price}</div>
+          <div class="item-meta">by ${d.creator}</div>
         </div>
-        `;
-      }).join('')}
+      `).join('')}
     </div>
     <div style="margin-top:30px; text-align:center;">
       <button class="btn btn-danger" style="max-width:300px;" onclick="clearMyRecipes()">🗑️ Clear All My Recipes</button>
     </div>
   `;
 }
-
 function clearMyRecipes() {
   if(!confirm('Delete all your custom recipes? This cannot be undone.')) return;
   myRecipes = [];
@@ -1011,13 +1024,10 @@ function closeModal() {
 }
 
 function calculatePrice(recipeIngredients) {
-  // Check if ANY ingredient in the drink has 'premium: true' in the master inventory
   const hasPremium = recipeIngredients.some(ing => {
     const item = INVENTORY.find(i => i.id === ing.id);
     return item && item.premium === true;
   });
-  
-  // Return $6.50 if true, $4.50 if false
   return hasPremium ? "$6.50" : "$4.50";
 }
 
@@ -1043,851 +1053,6 @@ if(document.readyState === 'loading') {
 } else {
   init();
 }
-</script>
-</body>
-</html>
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Midtown Mixology</title>
-<style>
-:root {
---neon-cyan: #00f3ff;
---neon-pink: #ff00aa;
---neon-gold: #ffd700;
---neon-lime: #39ff14;
---dark-bg: #0a0a12;
---panel-bg: rgba(20, 20, 35, 0.9);
---glass-border: rgba(255, 255, 255, 0.12);
---text-primary: #ffffff;
---text-secondary: #b0b0c0;
-}
-• { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-html, body {
-margin: 0; padding: 0; width: 100%; height: 100%;
-background: var(--dark-bg); color: var(--text-primary);
-font-family: 'Segoe UI', Arial, sans-serif;
-overflow: hidden; touch-action: manipulation;
-}
-.bg-animation {
-position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-z-index: 0; pointer-events: none;
-background:
-radial-gradient(ellipse at 20% 50%, rgba(255,0,170,0.12) 0%, transparent 50%),
-radial-gradient(ellipse at 80% 20%, rgba(0,243,255,0.12) 0%, transparent 50%),
-radial-gradient(ellipse at 50% 80%, rgba(255,215,0,0.08) 0%, transparent 50%);
-}
-.bubble {
-position: absolute; bottom: -60px;
-background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.6), rgba(255,255,255,0.05));
-border-radius: 50%; opacity: 0.25;
-animation: rise 10s infinite ease-in;
-pointer-events: none;
-}
-@keyframes rise {
-0% { transform: translateY(0) scale(1); opacity: 0.25; }
-100% { transform: translateY(-120vh) scale(0.4); opacity: 0; }
-}
-#app {
-position: relative; z-index: 1;
-width: 100%; height: 100%;
-display: flex; flex-direction: column;
-}
-header {
-padding: 14px 20px;
-background: linear-gradient(90deg, rgba(0,243,255,0.08), rgba(255,0,170,0.08));
-border-bottom: 1px solid var(--glass-border);
-display: flex; justify-content: space-between; align-items: center;
-flex-shrink: 0;
-}
-.logo {
-font-size: 1.5rem; font-weight: 900;
-background: linear-gradient(90deg, var(--neon-cyan), var(--neon-pink), var(--neon-gold));
--webkit-background-clip: text; -webkit-text-fill-color: transparent;
-animation: glowText 3s ease-in-out infinite alternate;
-}
-@keyframes glowText {
-from { filter: drop-shadow(0 0 5px rgba(0,243,255,0.4)); }
-to { filter: drop-shadow(0 0 20px rgba(255,0,170,0.6)); }
-}
-.nav-btn {
-background: rgba(255,255,255,0.08); border: 1px solid var(--glass-border);
-color: var(--text-primary); padding: 10px 18px; border-radius: 12px;
-font-size: 0.95rem; font-weight: 700; cursor: pointer;
-}
-.nav-btn:active { background: rgba(0,243,255,0.25); border-color: var(--neon-cyan); }
-main {
-flex: 1; overflow-y: auto; overflow-x: hidden;
-padding: 20px; position: relative;
-}
-main::-webkit-scrollbar { width: 6px; }
-main::-webkit-scrollbar-thumb { background: var(--neon-cyan); border-radius: 3px; }
-
-/* Radio navigation system */
-.nav-radio { display: none; }
-.view { display: none; animation: fadeIn 0.35s ease; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
-
-#nav-home:checked ~ #view-home,
-#nav-browse:checked ~ #view-browse,
-#nav-inventory:checked ~ #view-inventory,
-#nav-create:checked ~ #view-create,
-#nav-recipe:checked ~ #view-recipe,
-#nav-myrecipes:checked ~ #view-myrecipes { display: block; }
-
-/* Home */
-.home-grid {
-display: grid; grid-template-columns: 1fr 1fr;
-gap: 18px; max-width: 700px; margin: 30px auto;
-}
-.home-card {
-background: var(--panel-bg);
-border: 2px solid var(--glass-border);
-border-radius: 24px; padding: 28px;
-display: flex; flex-direction: column;
-align-items: center; justify-content: center;
-cursor: pointer; transition: all 0.25s;
-min-height: 160px; text-align: center;
-text-decoration: none; color: var(--text-primary);
-}
-.home-card::before {
-content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
-background: conic-gradient(from 0deg, transparent, var(--neon-cyan), transparent 30%);
-animation: rotate 4s linear infinite; opacity: 0;
-transition: opacity 0.3s; pointer-events: none;
-}
-@keyframes rotate { 100% { transform: rotate(360deg); } }
-.home-card:hover::before, .home-card:active::before { opacity: 0.3; }
-.home-card-inner {
-position: relative; z-index: 1;
-background: var(--panel-bg); border-radius: 22px;
-width: calc(100% - 4px); height: calc(100% - 4px);
-display: flex; flex-direction: column;
-align-items: center; justify-content: center;
-padding: 20px; text-align: center;
-}
-.home-card:active {
-transform: scale(0.98);
-border-color: var(--neon-cyan);
-box-shadow: 0 0 25px rgba(0,243,255,0.2);
-}
-.home-icon { font-size: 3rem; margin-bottom: 10px; }
-.home-title { font-size: 1.25rem; font-weight: 800; margin-bottom: 5px; }
-.home-desc { font-size: 0.85rem; color: var(--text-secondary); }
-@media (max-width: 500px) {
-.home-grid { grid-template-columns: 1fr; margin: 20px auto; }
-.home-card { min-height: 110px; flex-direction: row; gap: 16px; padding: 18px 24px; text-align: left; }
-.home-icon { margin-bottom: 0; font-size: 2.5rem; }
-}
-
-/* Section titles */
-.section-title { font-size: 1.7rem; font-weight: 900; margin-bottom: 6px; }
-.section-sub { color: var(--text-secondary); margin-bottom: 18px; font-size: 1rem; }
-
-/* Filters */
-.filter-bar {
-display: flex; gap: 8px; overflow-x: auto;
-margin-bottom: 16px; padding-bottom: 8px;
-}
-.filter-chip {
-padding: 8px 18px; border-radius: 50px;
-border: 1px solid var(--glass-border);
-background: rgba(255,255,255,0.05); color: var(--text-secondary);
-font-weight: 700; cursor: pointer; white-space: nowrap;
-font-size: 0.9rem; transition: all 0.2s;
-}
-.filter-chip.active {
-background: linear-gradient(90deg, var(--neon-cyan), var(--neon-pink));
-color: #000; border-color: transparent;
-box-shadow: 0 0 12px rgba(0,243,255,0.35);
-}
-
-/* Cards */
-.card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
-.card {
-background: var(--panel-bg);
-border: 1px solid var(--glass-border);
-border-radius: 18px; padding: 16px;
-text-align: center; cursor: pointer;
-transition: all 0.2s; position: relative;
-}
-.card:active {
-transform: translateY(-4px);
-box-shadow: 0 6px 25px rgba(0,243,255,0.12);
-border-color: var(--neon-cyan);
-}
-.card-emoji { font-size: 2.6rem; line-height: 1; margin-bottom: 8px; display: block; }
-.card-title { font-weight: 800; font-size: 1rem; margin-bottom: 3px; }
-.card-meta { font-size: 0.78rem; color: var(--text-secondary); }
-.item-selected {
-border-color: var(--neon-lime) !important;
-box-shadow: 0 0 18px rgba(57,255,20,0.25) !important;
-background: rgba(57,255,20,0.06) !important;
-}
-.item-selected::after {
-content: '✓'; position: absolute; top: 6px; right: 10px;
-color: var(--neon-lime); font-weight: 900; font-size: 1.1rem;
-}
-
-/* Recipe detail */
-.recipe-hero {
-background: var(--panel-bg);
-border: 1px solid var(--glass-border);
-border-radius: 24px; padding: 24px;
-margin-bottom: 16px; text-align: center;
-position: relative; overflow: hidden;
-}
-.recipe-hero::after {
-content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-background: linear-gradient(90deg, var(--neon-cyan), var(--neon-pink), var(--neon-gold));
-}
-.recipe-emoji { font-size: 4.5rem; margin-bottom: 10px; display: block; animation: float 3s ease-in-out infinite; }
-@keyframes float { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-8px);} }
-.recipe-name { font-size: 1.7rem; font-weight: 900; margin-bottom: 5px; }
-.recipe-creator { color: var(--neon-gold); font-weight: 700; font-size: 1rem; margin-bottom: 12px; }
-.badge {
-display: inline-block; padding: 5px 14px; border-radius: 50px;
-background: rgba(0,243,255,0.12); border: 1px solid var(--neon-cyan);
-color: var(--neon-cyan); font-weight: 700; font-size: 0.8rem; margin: 0 3px 6px;
-}
-.ingredient-list {
-background: rgba(0,0,0,0.25); border-radius: 14px;
-padding: 16px; margin: 14px 0; text-align: left;
-}
-.ingredient-row {
-display: flex; justify-content: space-between;
-padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
-font-size: 1rem;
-}
-.ingredient-row:last-child { border-bottom: none; }
-.qty { color: var(--neon-cyan); font-weight: 800; }
-
-/* Buttons */
-.btn {
-display: block; width: 100%; padding: 14px 28px;
-margin-top: 10px; border: none; border-radius: 14px;
-font-size: 1rem; font-weight: 800; cursor: pointer;
-transition: all 0.2s; text-transform: uppercase;
-letter-spacing: 0.5px; color: #fff; font-family: inherit;
-}
-.btn-primary {
-background: linear-gradient(90deg, var(--neon-cyan), var(--neon-pink));
-color: #000; box-shadow: 0 0 18px rgba(0,243,255,0.25);
-}
-.btn-primary:active { transform: scale(1.02); box-shadow: 0 0 28px rgba(0,243,255,0.4); }
-.btn-gold { background: linear-gradient(90deg, var(--neon-gold), #ffaa00); color: #000; }
-.btn-outline {
-background: transparent; border: 2px solid var(--glass-border);
-color: var(--text-primary);
-}
-.btn-outline:active { border-color: var(--neon-cyan); background: rgba(0,243,255,0.08); }
-.btn-row { display: flex; gap: 10px; margin-top: 12px; }
-.btn-row .btn { margin-top: 0; }
-
-/* Forms */
-.form-group { margin-bottom: 18px; }
-label {
-display: block; margin-bottom: 6px;
-color: var(--neon-cyan); font-weight: 700; font-size: 0.85rem;
-text-transform: uppercase; letter-spacing: 0.5px;
-}
-input, textarea, select {
-width: 100%; padding: 14px; border-radius: 12px;
-background: rgba(0,0,0,0.35); border: 1px solid var(--glass-border);
-color: var(--text-primary); font-size: 1.05rem; outline: none;
-}
-input:focus, textarea:focus, select:focus {
-border-color: var(--neon-cyan);
-box-shadow: 0 0 12px rgba(0,243,255,0.15);
-}
-textarea { min-height: 90px; resize: vertical; }
-
-/* Steps */
-.step-indicator { display: flex; gap: 6px; margin-bottom: 20px; justify-content: center; }
-.step-dot { width: 40px; height: 5px; border-radius: 3px; background: rgba(255,255,255,0.08); transition: all 0.3s; }
-.step-dot.active { background: var(--neon-cyan); box-shadow: 0 0 8px var(--neon-cyan); }
-.step-dot.done { background: var(--neon-lime); }
-
-/* Empty */
-.empty { text-align: center; padding: 50px 20px; color: var(--text-secondary); }
-.empty-emoji { font-size: 4rem; margin-bottom: 14px; opacity: 0.5; }
-
-/* Print */
-@media print {
-header, .no-print, .bg-animation, .bubble { display: none !important; }
-body { background: #fff; color: #000; overflow: visible; }
-#app { height: auto; }
-main { overflow: visible; padding: 0; }
-.recipe-hero { border: 2px solid #000; box-shadow: none; page-break-inside: avoid; }
-.view { display: none !important; }
-#view-recipe.view { display: block !important; }
-}
-</style>
-</head>
-<body>
-<div class="bg-animation" id="bgAnim"></div>
-
-<div id="app">
-<header>
-<div class="logo">🍹 MIDTOWN MIXOLOGY</div>
-<label for="nav-home" class="nav-btn no-print">🏠 Home</label>
-</header>
-
-<main>
-<!-- Hidden radio buttons for CSS navigation -->
-<input type="radio" name="view" id="nav-home" class="nav-radio" checked>
-<input type="radio" name="view" id="nav-browse" class="nav-radio">
-<input type="radio" name="view" id="nav-inventory" class="nav-radio">
-<input type="radio" name="view" id="nav-create" class="nav-radio">
-<input type="radio" name="view" id="nav-recipe" class="nav-radio">
-<input type="radio" name="view" id="nav-myrecipes" class="nav-radio">
-
-<!-- HOME -->
-<div id="view-home" class="view">
-<div style="text-align:center; margin-top: 16px;">
-<h1 style="font-size: 1.9rem; margin-bottom: 6px;">What are we making tonight?</h1>
-<p class="section-sub" style="text-align:center;">Tap an option to get started</p>
-</div>
-<div class="home-grid">
-<label for="nav-browse" class="home-card" onclick="renderBrowse('All')">
-<div class="home-icon">📖</div>
-<div class="home-title">Browse Menu</div>
-<div class="home-desc">Explore our signature drinks & shots</div>
-</label>
-<label for="nav-inventory" class="home-card">
-<div class="home-icon">🧪</div>
-<div class="home-title">Our Inventory</div>
-<div class="home-desc">See what spirits & mixers we stock</div>
-</label>
-<label for="nav-create" class="home-card" onclick="startCreate()">
-<div class="home-icon">⚗️</div>
-<div class="home-title">Create Your Own</div>
-<div class="home-desc">Build a custom drink or shot</div>
-</label>
-<label for="nav-myrecipes" class="home-card" onclick="renderMyRecipes()">
-<div class="home-icon">💾</div>
-<div class="home-title">My Recipes</div>
-<div class="home-desc">View saved custom creations</div>
-</label>
-</div>
-</div>
-
-<!-- BROWSE -->
-<div id="view-browse" class="view">
-<div class="section-title">📖 Drink Menu</div>
-<div class="section-sub">Tap any drink to see the recipe</div>
-<div class="filter-bar" id="browseFilters"></div>
-<div class="card-grid" id="browseGrid"></div>
-</div>
-
-<!-- INVENTORY -->
-<div id="view-inventory" class="view">
-<div class="section-title">🧪 Inventory</div>
-<div class="section-sub">Everything behind our bar</div>
-<div class="filter-bar" id="invFilters"></div>
-<div class="card-grid" id="invGrid"></div>
-</div>
-// ================= EDIT YOUR INVENTORY HERE =================
-var INVENTORY = [var INVENTORY = [
-{id:'vod1', name:"Tito's Vodka", category:'Vodka', emoji:'🍸', premium:false, defaultQty:'1.5 oz'},
-{id:'vod2', name:'Ketel One', category:'Vodka', emoji:'🍸', premium:true, defaultQty:'1.5 oz'},
-{id:'rum1', name:'Bacardi Superior', category:'Rum', emoji:'🥥', premium:false, defaultQty:'1.5 oz'},{id:'wh03
-
-', name:'Evan Williams', category:'whiskey', emoji:'🥥', premium:false, defaultQty:'1.5 oz'},
-// ... more items
-];
-
-
-{id:',
-{id:'vod2', name:'Ketel One', category:'Vodka', emoji:'🍸', premium:true, defaultQty:'1.5 oz'},
-// ... etc
-];
-
-<!-- CREATE -->
-<div id="view-create" class="view">
-<div class="section-title">⚗️ Drink Lab</div>
-<div class="section-sub">Craft your masterpiece</div>
-<div class="step-indicator" id="stepIndicator">
-<div class="step-dot active"></div>
-<div class="step-dot"></div>
-<div class="step-dot"></div>
-<div class="step-dot"></div>
-</div>
-
-<div id="create-step-1">
-<div class="form-group">
-<label>Drink or Shot Name</label>
-<input type="text" id="createName" placeholder="e.g., The Midnight Spark">
-</div>
-<div class="form-group">
-<label>Created By (Your Name)</label>
-<input type="text" id="createCreator" placeholder="e.g., Alex">
-</div>
-<div class="form-group">
-<label>Type</label>
-<select id="createType">
-<option value="Cocktail">🍸 Cocktail</option>
-<option value="Shot">🥃 Shot</option>
-<option value="Mocktail">🧃 Mocktail</option>
-<option value="Special">✨ Special</option>
-</select>
-</div>
-<button class="btn btn-primary" onclick="nextStep(2)">Next: Pick Ingredients →</button>
-</div>
-
-<div id="create-step-2" style="display:none;">
-<div class="filter-bar" id="createFilters"></div>
-<div style="margin-bottom: 10px; color: var(--neon-lime); font-weight: 800;">
-Selected: <span id="selectedCount">0</span> items
-</div>
-<div class="card-grid" id="createGrid"></div>
-<div class="btn-row">
-<button class="btn btn-outline" onclick="prevStep(1)">← Back</button>
-<button class="btn btn-primary" onclick="nextStep(3)">Next: Details →</button>
-</div>
-</div>
-
-<div id="create-step-3" style="display:none;">
-<div id="selectedIngredientsReview"></div>
-<div class="form-group" style="margin-top: 15px;">
-<label>Instructions / Build Order</label>
-<textarea id="createInstructions" placeholder="1. Fill shaker with ice... 2. Add vodka and... 3. Shake and strain into..."></textarea>
-</div>
-<div class="form-group">
-<label>Glass Type</label>
-<select id="createGlass">
-<option>Rocks Glass</option>
-<option>Collins Glass</option>
-<option>Martini Glass</option>
-<option>Shot Glass</option>
-<option>Mug</option>
-<option>Other</option>
-</select>
-</div>
-<div class="btn-row">
-<button class="btn btn-outline" onclick="prevStep(2)">← Back</button>
-<button class="btn btn-primary" onclick="nextStep(4)">Next: Preview →</button>
-</div>
-</div>
-
-<div id="create-step-4" style="display:none;">
-<div id="createPreview"></div>
-<div class="btn-row">
-<button class="btn btn-outline" onclick="prevStep(3)">← Edit</button>
-<button class="btn btn-gold" onclick="saveCreation()">💾 Save Recipe</button>
-</div>
-</div>
-</div>
-
-<!-- RECIPE DETAIL -->
-<div id="view-recipe" class="view">
-<div id="recipeContent"></div>
-<div class="no-print" style="margin-top: 15px;">
-<div class="btn-row">
-<button class="btn btn-primary" onclick="window.print()">🖨️ Print for Bartender</button>
-<button class="btn btn-outline" onclick="goBack()">← Back</button>
-</div>
-</div>
-</div>
-
-<!-- MY RECIPES -->
-<div id="view-myrecipes" class="view">
-<div class="section-title">💾 My Creations</div>
-<div class="section-sub">All your custom recipes saved on this device</div>
-<div id="myRecipesList"></div>
-</div>
-</main>
-</div>
-
-<script>
-// ================= DATA =================
-var INVENTORY = [
-{ id:'vod1', name:"Tito's Vodka", category:'Vodka', emoji:'🍸' },
-{ id:'vod2', name:'Ketel One', category:'Vodka', emoji:'🍸' },
-{ id:'rum1', name:'Bacardi Superior', category:'Rum', emoji:'🥥' },
-{ id:'rum2', name:'Captain Morgan', category:'Rum', emoji:'🏴‍☠️' },
-{ id:'gin1', name:'Bombay Sapphire', category:'Gin', emoji:'🫐' },
-{ id:'gin2', name:'Tanqueray', category:'Gin', emoji:'🌿' },
-{ id:'teq1', name:'Patrón Silver', category:'Tequila', emoji:'🌵' },
-{ id:'teq2', name:'Jose Cuervo Gold', category:'Tequila', emoji:'🌅' },
-{ id:'whi1', name:"Jack Daniel's", category:'Whiskey', emoji:'🥃' },
-
-{ id:'whi4', name:"Evan Williams", category:'Whiskey', emoji:'🥃' },
- 
-{ id:'whi2', name:'Jameson', category:'Whiskey', emoji:'☘️' },
-{ id:'whi3', name:'Fireball', category:'Whiskey', emoji:'🔥' },
-{ id:'liq1', name:'Triple Sec', category:'Liqueur', emoji:'🍊' },
-{ id:'liq2', name:'Blue Curaçao', category:'Liqueur', emoji:'💎' },
-{ id:'liq3', name:'Peach Schnapps', category:'Liqueur', emoji:'🍑' },
-{ id:'liq4', name:'Sour Apple Pucker', category:'Liqueur', emoji:'🍏' },
-{ id:'mix1', name:'Orange Juice', category:'Mixer', emoji:'🍊' },
-{ id:'mix2', name:'Cranberry Juice', category:'Mixer', emoji:'🫐' },
-{ id:'mix3', name:'Pineapple Juice', category:'Mixer', emoji:'🍍' },
-{ id:'mix4', name:'Sour Mix', category:'Mixer', emoji:'🍋' },
-{ id:'mix5', name:'Ginger Beer', category:'Mixer', emoji:'🫚' },
-{ id:'mix6', name:'Club Soda', category:'Mixer', emoji:'💧' },
-{ id:'mix7', name:'Cola', category:'Mixer', emoji:'🥤' },
-{ id:'mix8', name:'Grenadine', category:'Mixer', emoji:'🌹' },
-{ id:'gar1', name:'Lime Wedge', category:'Garnish', emoji:'🍈' },
-{ id:'gar2', name:'Cherry', category:'Garnish', emoji:'🍒' },
-{ id:'gar3', name:'Olive', category:'Garnish', emoji:'🫒' },
-{ id:'gar4', name:'Mint Sprig', category:'Garnish', emoji:'🌿' },
-{ id:'ext1', name:'Simple Syrup', category:'Extra', emoji:'🍯' },
-{ id:'ext2', name:'Whipped Cream', category:'Extra', emoji:'🍦' },
-{ id:'ext3', name:'Salt Rim', category:'Extra', emoji:'🧂' },
-{ id:'ext4', name:'Sugar Rim', category:'Extra', emoji:'✨' }
-];
-
-var DEFAULT_DRINKS = [
-{
-id:'d1', name:'Midtown Mule', creator:'House', type:'Cocktail', glass:'Mug',
-emoji:'🫚', instructions:'Fill copper mug with ice. Add vodka and lime juice. Top with ginger beer. Garnish with lime wedge.',
-ingredients:[{id:'vod1', qty:'2 oz'}, {id:'mix5', qty:'4 oz'}, {id:'gar1', qty:'1 wedge'}]
-},
-{
-id:'d2', name:'Tropical Sunset', creator:'House', type:'Cocktail', glass:'Collins Glass',
-emoji:'🌅', instructions:'Build over ice: rum, pineapple, orange juice. Float grenadine. Garnish with cherry.',
-ingredients:[{id:'rum1', qty:'1.5 oz'}, {id:'mix3', qty:'3 oz'}, {id:'mix1', qty:'2 oz'}, {id:'mix8', qty:'0.5 oz'}, {id:'gar2', qty:'1 cherry'}]
-},
-{
-id:'d3', name:'Blue Lightning', creator:'House', type:'Shot', glass:'Shot Glass',
-emoji:'⚡', instructions:'Shake vodka, blue curaçao, and sour mix with ice. Strain into shot glass.',
-ingredients:[{id:'vod1', qty:'1 oz'}, {id:'liq2', qty:'0.5 oz'}, {id:'mix4', qty:'0.5 oz'}]
-},
-{
-id:'d4', name:'Peach Whiskey Smash', creator:'House', type:'Cocktail', glass:'Rocks Glass',
-emoji:'🍑', instructions:'Muddle mint and peach schnapps. Add whiskey and ice. Stir gently.',
-ingredients:[{id:'whi1', qty:'2 oz'}, {id:'liq3', qty:'1 oz'}, {id:'gar4', qty:'2 sprigs'}]
-},
-{
-id:'d5', name:'Firecracker', creator:'House', type:'Shot', glass:'Shot Glass',
-emoji:'🧨', instructions:'Layer Fireball and peach schnapps in shot glass.',
-ingredients:[{id:'whi3', qty:'1 oz'}, {id:'liq3', qty:'1 oz'}]
-},
-{
-id:'d6', name:'Gin Garden', creator:'House', type:'Cocktail', glass:'Collins Glass',
-emoji:'🌿', instructions:'Build gin, sour mix, and club soda over ice. Top with mint.',
-ingredients:[{id:'gin1', qty:'2 oz'}, {id:'mix4', qty:'2 oz'}, {id:'mix6', qty:'2 oz'}, {id:'gar4', qty:'3 leaves'}]
-},
-{
-id:'d7', name:'Cran-Teq Cooler', creator:'House', type:'Cocktail', glass:'Rocks Glass',
-emoji:'🫐', instructions:'Shake tequila, triple sec, and cranberry with ice. Strain over fresh ice. Lime wedge garnish.',
-ingredients:[{id:'teq1', qty:'2 oz'}, {id:'liq1', qty:'0.5 oz'}, {id:'mix2', qty:'3 oz'}, {id:'gar1', qty:'1 wedge'}]
-},
-{
-id:'d8', name:'Apple Pie Shot', creator:'House', type:'Shot', glass:'Shot Glass',
-emoji:'🥧', instructions:'Shake whiskey and sour apple pucker with ice. Strain. Top with whipped cream.',
-ingredients:[{id:'whi2', qty:'1 oz'}, {id:'liq4', qty:'1 oz'}, {id:'ext2', qty:'dollop'}]
-}
-];
-
-// ================= STATE =================
-var currentStep = 1;
-var selectedIngredients = {};
-var lastView = 'home';
-var allDrinks = [];
-var myRecipes = [];
-
-// ================= INIT =================
-function init() {
-var bg = document.getElementById('bgAnim');
-for (var i = 0; i < 15; i++) {
-var b = document.createElement('div');
-b.className = 'bubble';
-b.style.left = Math.random() * 100 + '%';
-b.style.width = b.style.height = (10 + Math.random() * 30) + 'px';
-b.style.animationDuration = (6 + Math.random() * 8) + 's';
-b.style.animationDelay = (Math.random() * 5) + 's';
-bg.appendChild(b);
-}
-allDrinks = JSON.parse(JSON.stringify(DEFAULT_DRINKS));
-myRecipes = [];
-renderBrowseFilters();
-renderBrowse('All');
-renderInvFilters();
-renderInventory('All');
-}
-
-// ================= NAVIGATION =================
-function showView(name) {
-document.getElementById('nav-' + name).checked = true;
-if (name !== 'recipe') lastView = name;
-window.scrollTo(0, 0);
-}
-function goHome() { showView('home'); }
-function goBack() { showView(lastView); }
-
-// ================= BROWSE =================
-function renderBrowseFilters() {
-var cats = ['All', 'Cocktail', 'Shot', 'Mocktail', 'Special'];
-var bar = document.getElementById('browseFilters');
-if (!bar) return;
-var html = '';
-for (var i = 0; i < cats.length; i++) {
-html += '<div class="filter-chip ' + (cats[i] === 'All' ? 'active' : '') + '" onclick="filterBrowse(this,'' + cats[i] + '')">' + cats[i] + '</div>';
-}
-bar.innerHTML = html;
-}
-function filterBrowse(el, cat) {
-var chips = el.parentNode.getElementsByClassName('filter-chip');
-for (var i = 0; i < chips.length; i++) chips[i].classList.remove('active');
-el.classList.add('active');
-renderBrowse(cat);
-}
-function renderBrowse(filter) {
-var grid = document.getElementById('browseGrid');
-if (!grid) return;
-var items = [];
-for (var i = 0; i < allDrinks.length; i++) {
-if (filter === 'All' || allDrinks[i].type === filter) items.push(allDrinks[i]);
-}
-if (items.length === 0) { grid.innerHTML = '<div class="empty"><div class="empty-emoji">🍸</div><h3>No drinks found</h3></div>'; return; }
-var html = '';
-for (var i = 0; i < items.length; i++) {
-var d = items[i];
-html += '<div class="card" onclick="openRecipe('' + d.id + '')"><span class="card-emoji">' + d.emoji + '</span><div class="card-title">' + d.name + '</div><div class="card-meta">' + d.type + ' • ' + d.glass + '</div></div>';
-}
-grid.innerHTML = html;
-}
-
-// ================= INVENTORY =================
-function renderInvFilters() {
-var cats = ['All'];
-var seen = {};
-for (var i = 0; i < INVENTORY.length; i++) {
-if (!seen[INVENTORY[i].category]) { seen[INVENTORY[i].category] = true; cats.push(INVENTORY[i].category); }
-}
-var bar = document.getElementById('invFilters');
-if (!bar) return;
-var html = '';
-for (var i = 0; i < cats.length; i++) {
-html += '<div class="filter-chip ' + (cats[i] === 'All' ? 'active' : '') + '" onclick="filterInv(this,'' + cats[i] + '')">' + cats[i] + '</div>';
-}
-bar.innerHTML = html;
-}
-function filterInv(el, cat) {
-var chips = el.parentNode.getElementsByClassName('filter-chip');
-for (var i = 0; i < chips.length; i++) chips[i].classList.remove('active');
-el.classList.add('active');
-renderInventory(cat);
-}
-function renderInventory(filter) {
-var grid = document.getElementById('invGrid');
-if (!grid) return;
-var html = '';
-for (var i = 0; i < INVENTORY.length; i++) {
-var it = INVENTORY[i];
-if (filter !== 'All' && it.category !== filter) continue;
-html += '<div class="card"><span class="card-emoji">' + it.emoji + '</span><div class="card-title">' + it.name + '</div><div class="card-meta">' + it.category + '</div></div>';
-}
-grid.innerHTML = html;
-}
-
-// ================= CREATE =================
-function startCreate() {
-currentStep = 1;
-selectedIngredients = {};
-document.getElementById('createName').value = '';
-document.getElementById('createCreator').value = '';
-document.getElementById('createType').value = 'Cocktail';
-document.getElementById('createInstructions').value = '';
-document.getElementById('createGlass').value = 'Rocks Glass';
-updateStepIndicator();
-showStep(1);
-}
-function updateStepIndicator() {
-var dots = document.getElementById('stepIndicator').getElementsByClassName('step-dot');
-for (var i = 0; i < dots.length; i++) {
-dots[i].classList.remove('active', 'done');
-if (i + 1 < currentStep) dots[i].classList.add('done');
-else if (i + 1 === currentStep) dots[i].classList.add('active');
-}
-}
-function showStep(n) {
-for (var i = 1; i <= 4; i++) {
-var el = document.getElementById('create-step-' + i);
-if (el) el.style.display = (i === n ? 'block' : 'none');
-}
-if (n === 2) { renderCreateFilters(); renderCreateGrid('All'); }
-if (n === 3) renderSelectedReview();
-if (n === 4) renderPreview();
-currentStep = n;
-updateStepIndicator();
-}
-function nextStep(n) {
-if (n === 2) {
-if (!document.getElementById('createName').value.trim()) { alert('Enter a drink name!'); return; }
-}
-if (n === 3) {
-var count = 0;
-for (var k in selectedIngredients) if (selectedIngredients[k]) count++;
-if (count === 0) { alert('Select at least one ingredient!'); return; }
-}
-showStep(n);
-}
-function prevStep(n) { showStep(n); }
-
-function renderCreateFilters() {
-var cats = ['All'];
-var seen = {};
-for (var i = 0; i < INVENTORY.length; i++) {
-if (!seen[INVENTORY[i].category]) { seen[INVENTORY[i].category] = true; cats.push(INVENTORY[i].category); }
-}
-var bar = document.getElementById('createFilters');
-if (!bar) return;
-var html = '';
-for (var i = 0; i < cats.length; i++) {
-html += '<div class="filter-chip ' + (cats[i] === 'All' ? 'active' : '') + '" onclick="filterCreate(this,'' + cats[i] + '')">' + cats[i] + '</div>';
-}
-bar.innerHTML = html;
-}
-function filterCreate(el, cat) {
-var chips = el.parentNode.getElementsByClassName('filter-chip');
-for (var i = 0; i < chips.length; i++) chips[i].classList.remove('active');
-el.classList.add('active');
-renderCreateGrid(cat);
-}
-function renderCreateGrid(filter) {
-var grid = document.getElementById('createGrid');
-if (!grid) return;
-var html = '';
-for (var i = 0; i < INVENTORY.length; i++) {
-var it = INVENTORY[i];
-if (filter !== 'All' && it.category !== filter) continue;
-var sel = selectedIngredients[it.id];
-var extra = '';
-if (sel) extra = '<div style="margin-top:5px;color:var(--neon-lime);font-weight:700;font-size:0.8rem;">' + sel + '</div>';
-html += '<div class="card ' + (sel ? 'item-selected' : '') + '" onclick="toggleIngredient('' + it.id + '')" style="position:relative;"><span class="card-emoji">' + it.emoji + '</span><div class="card-title">' + it.name + '</div><div class="card-meta">' + it.category + '</div>' + extra + '</div>';
-}
-grid.innerHTML = html;
-var count = 0;
-for (var k in selectedIngredients) if (selectedIngredients[k]) count++;
-document.getElementById('selectedCount').textContent = count;
-}
-function toggleIngredient(id) {
-if (selectedIngredients[id]) {
-delete selectedIngredients[id];
-} else {
-var item = null;
-for (var i = 0; i < INVENTORY.length; i++) {
-if (INVENTORY[i].id === id) { item = INVENTORY[i]; break; }
-}
-var qty = prompt('How much ' + item.name + '?
-Examples: 1 oz, 2 oz, 0.5 oz, splash, dash, top');
-if (qty && qty.trim()) selectedIngredients[id] = qty.trim();
-}
-var activeChip = document.querySelector('#createFilters .filter-chip.active');
-var activeText = 'All';
-if (activeChip) activeText = activeChip.textContent || activeChip.innerText || 'All';
-renderCreateGrid(activeText);
-}
-function renderSelectedReview() {
-var container = document.getElementById('selectedIngredientsReview');
-if (!container) return;
-var html = '';
-for (var id in selectedIngredients) {
-if (!selectedIngredients[id]) continue;
-var it = null;
-for (var i = 0; i < INVENTORY.length; i++) {
-if (INVENTORY[i].id === id) { it = INVENTORY[i]; break; }
-}
-html += '<div class="ingredient-row"><span>' + it.emoji + ' ' + it.name + '</span><span class="qty">' + selectedIngredients[id] + '</span></div>';
-}
-container.innerHTML = '<div style="background:rgba(0,0,0,0.25);border-radius:14px;padding:14px;margin-bottom:14px;"><h3 style="margin-top:0;color:var(--neon-cyan);font-size:1.1rem;">Selected Ingredients</h3>' + (html || '<div style="color:var(--text-secondary)">None selected</div>') + '</div>';
-}
-function renderPreview() {
-var name = document.getElementById('createName').value;
-var creator = document.getElementById('createCreator').value || 'Anonymous';
-var type = document.getElementById('createType').value;
-var glass = document.getElementById('createGlass').value;
-var instructions = document.getElementById('createInstructions').value;
-var emoji = type === 'Shot' ? '🥃' : type === 'Mocktail' ? '🧃' : '🍸';
-var ingRows = '';
-for (var id in selectedIngredients) {
-if (!selectedIngredients[id]) continue;
-var it = null;
-for (var i = 0; i < INVENTORY.length; i++) {
-if (INVENTORY[i].id === id) { it = INVENTORY[i]; break; }
-}
-ingRows += '<div class="ingredient-row"><span>' + it.emoji + ' ' + it.name + '</span><span class="qty">' + selectedIngredients[id] + '</span></div>';
-}
-document.getElementById('createPreview').innerHTML = '<div class="recipe-hero"><span class="recipe-emoji">' + emoji + '</span><div class="recipe-name">' + name + '</div><div class="recipe-creator">Created by ' + creator + '</div><div><span class="badge">' + type + '</span><span class="badge">' + glass + '</span></div><div class="ingredient-list">' + ingRows + '</div><div style="text-align:left;white-space:pre-wrap;margin-top:14px;font-size:1rem;line-height:1.5;">' + instructions + '</div></div>';
-}
-function saveCreation() {
-var name = document.getElementById('createName').value.trim();
-var creator = document.getElementById('createCreator').value.trim() || 'Anonymous';
-var type = document.getElementById('createType').value;
-var glass = document.getElementById('createGlass').value;
-var instructions = document.getElementById('createInstructions').value;
-var emoji = type === 'Shot' ? '🥃' : type === 'Mocktail' ? '🧃' : '🍸';
-var ingredients = [];
-for (var id in selectedIngredients) {
-if (!selectedIngredients[id]) continue;
-ingredients.push({id: id, qty: selectedIngredients[id]});
-}
-var newDrink = {
-id: 'custom_' + Date.now(),
-name: name, creator: creator, type: type, glass: glass,
-instructions: instructions, ingredients: ingredients, emoji: emoji,
-isCustom: true
-};
-allDrinks.push(newDrink);
-myRecipes.push(newDrink);
-alert(name + ' by ' + creator + ' saved!');
-renderBrowse('All');
-showView('browse');
-}
-
-// ================= RECIPE VIEW =================
-function openRecipe(id) {
-var d = null;
-for (var i = 0; i < allDrinks.length; i++) {
-if (allDrinks[i].id === id) { d = allDrinks[i]; break; }
-}
-if (!d) return;
-var ingRows = '';
-for (var i = 0; i < d.ingredients.length; i++) {
-var it = null;
-for (var j = 0; j < INVENTORY.length; j++) {
-if (INVENTORY[j].id === d.ingredients[i].id) { it = INVENTORY[j]; break; }
-}
-var name = it ? it.emoji + ' ' + it.name : d.ingredients[i].id;
-ingRows += '<div class="ingredient-row"><span>' + name + '</span><span class="qty">' + d.ingredients[i].qty + '</span></div>';
-}
-document.getElementById('recipeContent').innerHTML = '<div class="recipe-hero"><span class="recipe-emoji">' + d.emoji + '</span><div class="recipe-name">' + d.name + '</div><div class="recipe-creator">' + (d.isCustom ? '✨ Crafted by ' : 'House Recipe — ') + d.creator + '</div><div><span class="badge">' + d.type + '</span><span class="badge">' + d.glass + '</span></div><div class="ingredient-list">' + ingRows + '</div><div style="text-align:left;white-space:pre-wrap;margin-top:14px;font-size:1.05rem;line-height:1.6;">' + d.instructions + '</div></div><div class="no-print" style="background:rgba(255,215,0,0.08);border:1px solid var(--neon-gold);border-radius:14px;padding:14px;margin-top:14px;text-align:center;"><strong style="color:var(--neon-gold);font-size:1rem;">🖨️ Bartender Ticket</strong><p style="margin:6px 0 0;color:var(--text-secondary);font-size:0.9rem;">Tap "Print for Bartender" below to send this to the printer.</p></div>';
-showView('recipe');
-}
-
-// ================= MY RECIPES =================
-function renderMyRecipes() {
-var container = document.getElementById('myRecipesList');
-if (!container) return;
-if (myRecipes.length === 0) {
-container.innerHTML = '<div class="empty"><div class="empty-emoji">📝</div><h3>No creations yet</h3><p>Head to "Create Your Own" to craft your first drink!</p><label for="nav-create" class="btn btn-primary" style="max-width:300px;margin:18px auto 0;display:block;text-align:center;" onclick="startCreate()">Create Now</label></div>';
-return;
-}
-var html = '<div class="card-grid">';
-for (var i = 0; i < myRecipes.length; i++) {
-var d = myRecipes[i];
-html += '<div class="card" onclick="openRecipe('' + d.id + '')"><span class="card-emoji">' + d.emoji + '</span><div class="card-title">' + d.name + '</div><div class="card-meta">by ' + d.creator + '</div></div>';
-}
-html += '</div>';
-container.innerHTML = html;
-}
-
-// Prevent double-tap zoom
-var lastTouchEnd = 0;
-document.addEventListener('touchend', function(e) {
-var now = Date.now();
-if (now - lastTouchEnd <= 300) e.preventDefault();
-lastTouchEnd = now;
-}, false);
-
-// Start
-init();
 </script>
 </body>
 </html>
