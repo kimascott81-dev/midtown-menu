@@ -891,6 +891,42 @@ function saveCreation() {
   const emoji = type==='Shot'?'🥃':type==='Mocktail'?'🧃':'🍸';
   const ingredients = Object.entries(selectedIngredients).map(([id,qty])=>({id,qty}));
 
+  let targetId = editingRecipeId;
+
+  if (editingRecipeId) {
+    const drinkIndex = allDrinks.findIndex(d => d.id === editingRecipeId);
+    const myIndex = myRecipes.findIndex(d => d.id === editingRecipeId);
+
+    if (drinkIndex !== -1) {
+      allDrinks[drinkIndex] = { ...allDrinks[drinkIndex], name, creator, type, glass, instructions, ingredients, emoji };
+    }
+    if (myIndex !== -1) {
+      myRecipes[myIndex] = { ...myRecipes[myIndex], name, creator, type, glass, instructions, ingredients, emoji };
+    }
+    showToast('Recipe Updated!'); // <-- Fixed: No more blocking modal
+  } else {
+    targetId = 'custom_'+Date.now();
+    const newDrink = {
+      id: targetId,
+      name, creator, type, glass, instructions, ingredients, emoji,
+      isCustom: true
+    };
+    allDrinks.push(newDrink);
+    myRecipes.push(newDrink);
+    showToast('Recipe Saved!'); // <-- Fixed: No more blocking modal
+  }
+
+  safeSet('midtown_drinks', allDrinks);
+  safeSet('midtown_myrecipes', myRecipes);
+
+  editingRecipeId = null;
+  renderBrowse('All');
+  renderMyRecipes();
+  
+  // Instantly open the recipe so it is ready to use or print
+  openRecipe(targetId); 
+}
+
   if (editingRecipeId) {
     const drinkIndex = allDrinks.findIndex(d => d.id === editingRecipeId);
     const myIndex = myRecipes.findIndex(d => d.id === editingRecipeId);
