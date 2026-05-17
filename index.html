@@ -275,13 +275,16 @@
 
   /* Print Styles */
   @media print {
-    header, .no-print, .bg-animation, .bubble { display: none !important; }
+    header, .no-print, .bg-animation, .bubble, .step-indicator, .section-title, .section-sub { display: none !important; }
     body { background: white; color: black; overflow: visible; }
     #app { height: auto; }
     main { overflow: visible; padding: 0; }
-    .recipe-hero { border: 2px solid #000; box-shadow: none; page-break-inside: avoid; }
+    .recipe-hero { border: 2px solid #000; box-shadow: none; page-break-inside: avoid; margin: 0; }
     .view { display: none !important; }
     #view-recipe.view.active { display: block !important; }
+    #view-create.view.active { display: block !important; }
+    #create-step-1, #create-step-2, #create-step-3 { display: none !important; }
+    #create-step-4 { display: block !important; }
   }
 
   /* Modal */
@@ -466,9 +469,10 @@
 
       <div id="create-step-4" style="display:none;">
         <div id="createPreview"></div>
-        <div style="display:flex; gap:10px; margin-top: 20px;">
-          <button class="btn btn-outline" onclick="prevStep(3)">← Edit</button>
-          <button class="btn btn-gold" onclick="saveCreation()">💾 Save Recipe</button>
+        <div class="no-print" style="display:flex; flex-wrap: wrap; gap:10px; margin-top: 20px;">
+          <button class="btn btn-outline" style="flex:1;" onclick="prevStep(3)">← Edit</button>
+          <button class="btn btn-primary" style="flex:1;" onclick="window.print()">🖨️ Print Ticket</button>
+          <button class="btn btn-gold" style="flex:100%;" onclick="saveCreation()">💾 Save Recipe</button>
         </div>
       </div>
     </div>
@@ -693,13 +697,17 @@ function renderBrowse(filter) {
   if(!grid) return;
   const items = filter==='All' ? allDrinks : allDrinks.filter(d=>d.type===filter);
   if(items.length===0) { grid.innerHTML='<div class="empty-state"><div class="big-emoji">🍸</div><h3>No drinks found</h3></div>'; return; }
-  grid.innerHTML = items.map(d=>`
+  grid.innerHTML = items.map(d=>{
+    const price = calculatePrice(d.ingredients);
+    return `
     <div class="item-card" onclick="openRecipe('${d.id}')">
       <span class="item-emoji">${d.emoji}</span>
       <div class="item-name">${d.name}</div>
-      <div class="item-meta">${d.type} • ${d.glass}</div>
+      <div class="item-meta" style="margin-bottom: 6px;">${d.type} • ${d.glass}</div>
+      <div style="color: var(--neon-lime); font-weight: 800; font-size: 0.95rem;">${price}</div>
     </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
 // ================= INVENTORY =================
@@ -903,7 +911,7 @@ function saveCreation() {
     if (myIndex !== -1) {
       myRecipes[myIndex] = { ...myRecipes[myIndex], name, creator, type, glass, instructions, ingredients, emoji };
     }
-    showToast('Recipe Updated!'); // <-- Fixed: No more blocking modal
+    showToast('Recipe Updated!'); 
   } else {
     targetId = 'custom_'+Date.now();
     const newDrink = {
@@ -913,7 +921,7 @@ function saveCreation() {
     };
     allDrinks.push(newDrink);
     myRecipes.push(newDrink);
-    showToast('Recipe Saved!'); // <-- Fixed: No more blocking modal
+    showToast('Recipe Saved!'); 
   }
 
   safeSet('midtown_drinks', allDrinks);
@@ -925,37 +933,6 @@ function saveCreation() {
   
   // Instantly open the recipe so it is ready to use or print
   openRecipe(targetId); 
-}
-
-  if (editingRecipeId) {
-    const drinkIndex = allDrinks.findIndex(d => d.id === editingRecipeId);
-    const myIndex = myRecipes.findIndex(d => d.id === editingRecipeId);
-
-    if (drinkIndex !== -1) {
-      allDrinks[drinkIndex] = { ...allDrinks[drinkIndex], name, creator, type, glass, instructions, ingredients, emoji };
-    }
-    if (myIndex !== -1) {
-      myRecipes[myIndex] = { ...myRecipes[myIndex], name, creator, type, glass, instructions, ingredients, emoji };
-    }
-    showModal('✏️', 'Recipe Updated!', `${name} has been updated successfully.`);
-  } else {
-    const newDrink = {
-      id: 'custom_'+Date.now(),
-      name, creator, type, glass, instructions, ingredients, emoji,
-      isCustom: true
-    };
-    allDrinks.push(newDrink);
-    myRecipes.push(newDrink);
-    showModal('🎉', 'Recipe Saved!', `${name} by ${creator} is now in the menu and your collection.`);
-  }
-
-  safeSet('midtown_drinks', allDrinks);
-  safeSet('midtown_myrecipes', myRecipes);
-
-  editingRecipeId = null;
-  renderBrowse('All');
-  renderMyRecipes();
-  showView('my-recipes');
 }
 
 // ================= RECIPE VIEW =================
@@ -1021,13 +998,17 @@ function renderMyRecipes() {
   }
   container.innerHTML = `
     <div class="card-grid" style="margin-top:20px;">
-      ${myRecipes.map(d=>`
+      ${myRecipes.map(d=>{
+        const price = calculatePrice(d.ingredients);
+        return `
         <div class="item-card" onclick="openRecipe('${d.id}')">
           <span class="item-emoji">${d.emoji}</span>
           <div class="item-name">${d.name}</div>
-          <div class="item-meta">by ${d.creator}</div>
+          <div class="item-meta" style="margin-bottom: 6px;">by ${d.creator}</div>
+          <div style="color: var(--neon-lime); font-weight: 800; font-size: 0.95rem;">${price}</div>
         </div>
-      `).join('')}
+        `;
+      }).join('')}
     </div>
     <div style="margin-top:30px; text-align:center;">
       <button class="btn btn-danger" style="max-width:300px;" onclick="clearMyRecipes()">🗑️ Clear All My Recipes</button>
