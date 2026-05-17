@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Midtown Mixology</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0; padding: 0; width: 100%; height: 100%;
+    background: #0a0a12; color: #fff;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    overflow: hidden; touch-action: manipulation;
+  }
+  #app {
+    position: relative; width: 100%; height: 100%;
+    display: flex; flex-direction: column;
+  }
+
+  /* Animated background */
+  .bg {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    z-index: 0; pointer-events: none;
+    background:
+      radial-gradient(ellipse at 20% 50%, rgba(255,0,170,0.12) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, rgba(0,243,255,0.12) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 80%, rgba(255,215,0,0.08) 0%, transparent 50%);
+  }
+  .bubble {
+    position: absolute; bottom: -60px;
+    background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.6), rgba(255,255,255,0.05));
+    border-radius: 50%; opacity: 0.25;
+    animation: rise 10s infinite ease-in;
+    pointer-events: none;
+  }
+  @keyframes rise {
+    0% { transform: translateY(0) scale(1); opacity: 0.25; }
+    100% { transform: translateY(-120vh) scale(0.4); opacity: 0; }
+  }
+
+  /* Header */
+  header {
+    position: relative; z-index: 2;
+    padding: 14px 20px;
+    background: rgba(26,26,46,0.9);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    display: flex; justify-content: space-between; align-items: center;
+    flex-shrink: 0;
+  }
+  .logo {
+    font-size: 1.5rem; font-weight: 900;
+    background: linear-gradient(90deg, #00f3ff, #ff00aa, #ffd700);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    animation: glow 3s ease-in-out infinite alternate;
+  }
+  @keyframes glow {
+    from { filter: drop-shadow(0 0 5px rgba(0,243,255,0.4)); }
+    to { filter: drop-shadow(0 0 20px rgba(255,0,170,0.6)); }
+  }
+  .nav-btn {
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+    color: #fff; padding: 10px 18px; border-radius: 12px;
+    font-size: 0.95rem; font-weight: 700; cursor: pointer;
+  }
+  .nav-btn:active { background: rgba(0,243,255,0.25); border-color: #00f3ff; }
+
+  /* Main content */
+  main {
+    position: relative; z-index: 2;
+    flex: 1; overflow-y: auto; overflow-x: hidden;
+    padding: 20px;
+  }
+  main::-webkit-scrollbar { width: 6px; }
+  main::-webkit-scrollbar-thumb { background: #00f3ff; border-radius: 3px; }
+
+  .view { display: none; animation: fadeIn 0.35s ease; }
+  .view.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* Home */
+  .home-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 18px; max-width: 700px; margin: 30px auto;
+  }
+  .home-card {
+    background: rgba(20,20,35,0.9);
+    border: 2px solid rgba(255,255,255,0.1);
+    border-radius: 24px; padding: 28px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.25s;
+    min-height: 160px; text-align: center;
+  }
+  .home-card:active {
+    transform: scale(0.98);
+    border-color: #00f3ff;
+    box-shadow: 0 0 25px rgba(0,243,255,0.2);
+  }
+  .home-icon { font-size: 3rem; margin-bottom: 10px; }
+  .home-title { font-size: 1.25rem; font-weight: 800; margin-bottom: 5px; }
+  .home-desc { font-size: 0.85rem; color: #aaa; }
+  @media (max-width: 500px) {
+    .home-grid { grid-template-columns: 1fr; margin: 20px auto; }
+    .home-card { min-height: 110px; flex-direction: row; gap: 16px; padding: 18px 24px; text-align: left; }
+    .home-icon { margin-bottom: 0; font-size: 2.5rem; }
+  }
+
+  /* Section headers */
+  .section-title { font-size: 1.7rem; font-weight: 900; margin-bottom: 6px; }
+  .section-sub { color: #aaa; margin-bottom: 18px; font-size: 1rem; }
+
+  /* Filters */
+  .filter-bar {
+    display: flex; gap: 8px; overflow-x: auto;
+    margin-bottom: 16px; padding-bottom: 8px;
+  }
+  .filter-btn {
+    padding: 8px 18px; border-radius: 50px;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.05); color: #aaa;
+    font-weight: 700; cursor: pointer; white-space: nowrap;
+    font-size: 0.9rem; transition: all 0.2s;
+  }
+  .filter-btn.active {
+    background: linear-gradient(90deg, #00f3ff, #ff00aa);
+    color: #000; border-color: transparent;
+    box-shadow: 0 0 12px rgba(0,243,255,0.35);
+  }
+
+  /* Cards */
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
+  .card {
+    background: rgba(20,20,35,0.9);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 18px; padding: 16px;
+    text-align: center; cursor: pointer;
+    transition: all 0.2s; position: relative;
+  }
+  .card:active {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 25px rgba(0,243,255,0.12);
+    border-color: #00f3ff;
+  }
+  .card-emoji { font-size: 2.4rem; display: block; margin-bottom: 6px; }
+  .card-title { font-weight: 800; font-size: 1rem; margin-bottom: 3px; }
+  .card-meta { font-size: 0.78rem; color: #888; }
+  .card-price { color: #ffd700; font-weight: 800; font-size: 1rem; margin-top: 5px; }
+  .card-counter { color: #888; font-size: 0.78rem; margin-top: 4px; }
+  .item-selected { border-color: #39ff14 !important; background: rgba(57,255,20,0.06) !important; }
+  .item-selected::after {
+    content: 'OK'; position: absolute; top: 6px; right: 10px;
+    color: #39ff14; font-weight: 900; font-size: 0.75rem;
+  }
+  .premium-tag { color: #ffd700; font-size: 0.75rem; font-weight: 700; margin-top: 4px; }
+
+  /* Recipe detail */
+  .recipe-hero {
+    background: rgba(20,20,35,0.9);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 24px; padding: 24px;
+    margin-bottom: 16px; text-align: center;
+    position: relative; overflow: hidden;
+  }
+  .recipe-hero::after {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, #00f3ff, #ff00aa, #ffd700);
+  }
+  .recipe-emoji { font-size: 4rem; margin-bottom: 10px; display: block; animation: float 3s ease-in-out infinite; }
+  @keyframes float { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-8px);} }
+  .recipe-name { font-size: 1.7rem; font-weight: 900; margin-bottom: 5px; }
+  .recipe-creator { color: #ffd700; font-weight: 700; font-size: 1rem; margin-bottom: 12px; }
+  .recipe-badges { margin-bottom: 10px; }
+  .badge {
+    display: inline-block; padding: 5px 14px; border-radius: 50px;
+    background: rgba(0,243,255,0.12); border: 1px solid #00f3ff;
+    color: #00f3ff; font-weight: 700; font-size: 0.8rem; margin: 0 3px 6px;
+  }
+  .price-badge {
+    display: inline-block; padding: 5px 14px; border-radius: 50px;
+    background: rgba(255,215,0,0.15); border: 1px solid #ffd700;
+    color: #ffd700; font-weight: 800; font-size: 1rem; margin: 0 3px 6px;
+  }
+  .print-counter { color: #888; font-size: 0.85rem; margin: 8px 0; }
+  .ingredient-list {
+    background: rgba(0,0,0,0.25); border-radius: 14px;
+    padding: 16px; margin: 14px 0; text-align: left;
+  }
+  .ingredient-row {
+    display: flex; justify-content: space-between;
+    padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+    font-size: 1rem;
+  }
+  .ingredient-row:last-child { border-bottom: none; }
+  .qty { color: #00f3ff; font-weight: 800; }
+  .notes-box {
+    background: rgba(0,0,0,0.3); border-left: 3px solid #ffd700;
+    padding: 12px; margin: 12px 0; border-radius: 0 8px 8px 0;
+    color: #ddd; font-style: italic; text-align: left;
+  }
+
+  /* Buttons */
+  .btn {
+    display: block; width: 100%; padding: 14px 28px;
+    margin-top: 10px; border: none; border-radius: 14px;
+    font-size: 1rem; font-weight: 800; cursor: pointer;
+    transition: all 0.2s; text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .btn-primary {
+    background: linear-gradient(90deg, #00f3ff, #ff00aa);
+    color: #000; box-shadow: 0 0 18px rgba(0,243,255,0.25);
+  }
+  .btn-primary:active { transform: scale(1.02); box-shadow: 0 0 28px rgba(0,243,255,0.4); }
+  .btn-gold { background: linear-gradient(90deg, #ffd700, #ffaa00); color: #000; }
+  .btn-outline {
+    background: transparent; border: 2px solid rgba(255,255,255,0.15);
+    color: #fff;
+  }
+  .btn-outline:active { border-color: #00f3ff; background: rgba(0,243,255,0.08); }
+  .btn-danger { background: #ff3366; color: #fff; }
+  .btn-small { width: auto; display: inline-block; padding: 10px 20px; font-size: 0.9rem; }
+  .btn-row { display: flex; gap: 10px; margin-top: 12px; }
+  .btn-row .btn { margin-top: 0; }
+
+  /* Forms */
+  .form-group { margin-bottom: 18px; }
+  label {
+    display: block; margin-bottom: 6px;
+    color: #00f3ff; font-weight: 700; font-size: 0.85rem;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  input, textarea, select {
+    width: 100%; padding: 14px; border-radius: 12px;
+    background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.12);
+    color: #fff; font-size: 1.05rem; outline: none;
+  }
+  input:focus, textarea:focus, select:focus {
+    border-color: #00f3ff;
+    box-shadow: 0 0 12px rgba(0,243,255,0.15);
+  }
+  textarea { min-height: 90px; resize: vertical; }
+  .checkbox-row { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+  .checkbox-row input { width: auto; }
+
+  /* Steps */
+  .step-indicator { display: flex; gap: 6px; margin-bottom: 20px; justify-content: center; }
+  .step-dot { width: 40px; height: 5px; border-radius: 3px; background: rgba(255,255,255,0.08); transition: all 0.3s; }
+  .step-dot.active { background: #00f3ff; box-shadow: 0 0 8px #00f3ff; }
+  .step-dot.done { background: #39ff14; }
+
+  /* Add form */
+  .add-form {
+    background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 14px; padding: 18px; margin-bottom: 20px; display: none;
+  }
+  .add-form.show { display: block; }
+
+  /* Export */
+  .export-box {
+    width: 100%; min-height: 120px; background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(255,255,255,0.15); border-radius: 12px;
+    color: #39ff14; font-family: monospace; font-size: 0.85rem;
+    padding: 12px; margin: 12px 0; word-break: break-all;
+  }
+
+  /* Empty state */
+  .empty { text-align: center; padding: 50px 20px; color: #888; }
+  .empty-emoji { font-size: 4rem; margin-bottom: 14px; opacity: 0.5; }
+
+  /* Print */
+  @media print {
+    header, .no-print, .bg, .bubble { display: none !important; }
+    body { background: #fff; color: #000; overflow: visible; }
+    #app { height: auto; }
+    main { overflow: visible; padding: 0; }
+    .recipe-hero { border: 2px solid #000; box-shadow: none; page-break-inside: avoid; }
+    .view { display: none !important; }
+    #view-recipe.view.active { display: block !important; }
+  }
+</style>
+</head>
+<body>
+<div class="bg" id="bgAnim"></div>
+
+<div id="app">
+  <header>
+    <div class="logo">MIDTOWN MIXOLOGY</div>
+    <button class="nav-btn no-print" onclick="goHome()">Home</button>
+  </header>
+
+  <main>
+    <!-- HOME -->
+    <div id="view-home" class="view active">
+      <div style="text-align:center; margin-top: 16px;">
+        <h1 style="font-size: 1.9rem; margin-bottom: 6px;">What are we making tonight?</h1>
+        <p class="section-sub" style="text-align:center;">Tap an option to get started</p>
+      </div>
+      <div class="home-grid">
+        <div class="home-card" onclick="showView('browse')">
+          <div class="home-icon">MENU</div>
+          <div>
+            <div class="home-title">Browse Menu</div>
+            <div class="home-desc">Signature drinks & shots</div>
+          </div>
+        </div>
+        <div class="home-card" onclick="showView('inventory')">
+          <div class="home-icon">INV</div>
+          <div>
+            <div class="home-title">Our Inventory</div>
+            <div class="home-desc">Spirits, mixers & more</div>
+          </div>
+        </div>
+        <div class="home-card" onclick="startCreate()">
+          <div class="home-icon">LAB</div>
+          <div>
+            <div class="home-title">Create Your Own</div>
+            <div class="home-desc">Build a custom drink</div>
+          </div>
+        </div>
+        <div class="home-card" onclick="showView('myrecipes')">
+          <div class="home-icon">SAVE</div>
+          <div>
+            <div class="home-title">My Recipes</div>
+            <div class="home-desc">Saved this session</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BROWSE -->
+    <div id="view-browse" class="view">
+      <div class="section-title">Drink Menu</div>
+      <div class="section-sub">Tap any drink to see recipe, price & print count</div>
+      <div class="filter-bar" id="browseFilters"></div>
+      <div class="card-grid" id="browseGrid"></div>
+    </div>
+
+    <!-- INVENTORY -->
+    <div id="view-inventory" class="view">
+      <div class="section-title">Inventory</div>
+      <div class="section-sub">Everything behind our bar. Tap + to add items.</div>
+      <div class="no-print" style="margin-bottom: 15px;">
+        <button class="btn btn-outline btn-small" onclick="toggleAddForm()">+ Add Item</button>
+      </div>
+      <div class="add-form" id="addForm">
+        <div class="form-group"><label>Item Name</label><input type="text" id="newItemName" placeholder="e.g., Grey Goose"></div>
+        <div class="form-group"><label>Category</label><input type="text" id="newItemCat" placeholder="e.g., Vodka"></div>
+        <div class="form-group"><label>Default Amount</label><input type="text" id="newItemQty" placeholder="e.g., 1.5 oz" value="1.5 oz"></div>
+        <div class="checkbox-row"><input type="checkbox" id="newItemPremium"><label style="margin:0;text-transform:none;">Premium (+$2.00 upgrade)</label></div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="addInventoryItem()">Add to Inventory</button>
+          <button class="btn btn-outline" onclick="toggleAddForm()">Cancel</button>
+        </div>
+      </div>
+      <div class="filter-bar" id="invFilters"></div>
+      <div class="card-grid" id="invGrid"></div>
+    </div>
+
+    <!-- CREATE / EDIT -->
+    <div id="view-create" class="view">
+      <div class="section-title" id="createTitle">Drink Lab</div>
+      <div class="section-sub">Craft your masterpiece</div>
+      <div class="step-indicator" id="stepIndicator">
+        <div class="step-dot active"></div>
+        <div class="step-dot"></div>
+        <div class="step-dot"></div>
+        <div class="step-dot"></div>
+      </div>
+
+      <div id="create-step-1">
+        <div class="form-group"><label>Drink Name</label><input type="text" id="createName" placeholder="e.g., The Midnight Spark"></div>
+        <div class="form-group"><label>Created By (Your Name)</label><input type="text" id="createCreator" placeholder="e.g., Alex"></div>
+        <div class="form-group"><label>Type</label><select id="createType"><option>Cocktail</option><option>Shot</option><option>Mocktail</option><option>Special</option></select></div>
+        <button class="btn btn-primary" onclick="nextStep(2)">Next: Pick Ingredients</button>
+      </div>
+
+      <div id="create-step-2" style="display:none;">
+        <div class="filter-bar" id="createFilters"></div>
+        <div style="margin-bottom: 10px; color: #39ff14; font-weight: 800;">Selected: <span id="selectedCount">0</span> items</div>
+        <div class="card-grid" id="createGrid"></div>
+        <div class="btn-row">
+          <button class="btn btn-outline" onclick="prevStep(1)">Back</button>
+          <button class="btn btn-primary" onclick="nextStep(3)">Next: Details</button>
+        </div>
+      </div>
+
+      <div id="create-step-3" style="display:none;">
+        <div id="selectedReview"></div>
+        <div class="form-group" style="margin-top: 15px;"><label>Glass Type</label><select id="createGlass"><option>Rocks Glass</option><option>Collins Glass</option><option>Martini Glass</option><option>Shot Glass</option><option>Mug</option><option>Other</option></select></div>
+        <div class="form-group"><label>Instructions / Build Order</label><textarea id="createInstructions" placeholder="1. Fill shaker with ice...&#10;2. Add vodka and...&#10;3. Shake and strain into..."></textarea></div>
+        <div class="form-group"><label>Bartender Notes</label><textarea id="createNotes" placeholder="Special instructions for the bartender..."></textarea></div>
+        <div class="btn-row">
+          <button class="btn btn-outline" onclick="prevStep(2)">Back</button>
+          <button class="btn btn-primary" onclick="nextStep(4)">Next: Preview</button>
+        </div>
+      </div>
+
+      <div id="create-step-4" style="display:none;">
+        <div id="createPreview"></div>
+        <div class="btn-row">
+          <button class="btn btn-outline" onclick="prevStep(3)">Edit</button>
+          <button class="btn btn-gold" onclick="saveCreation()">Save Recipe</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RECIPE DETAIL -->
+    <div id="view-recipe" class="view">
+      <div id="recipeContent"></div>
+      <div class="no-print" id="recipeActions" style="margin-top: 15px;"></div>
+    </div>
+
+    <!-- MY RECIPES -->
+    <div id="view-myrecipes" class="view">
+      <div class="section-title">My Creations</div>
+      <div class="section-sub">Saved during this session. Export before closing.</div>
+      <div id="myRecipesList"></div>
+    </div>
+  </main>
+</div>
+
+<script>
+// ================= DATA =================
+var INVENTORY = [
+  {id:'vod1',name:"Tito's Vodka",category:'Vodka',premium:false,defaultQty:'1.5 oz'},
+  {id:'vod2',name:'Ketel One',category:'Vodka',premium:true,defaultQty:'1.5 oz'},
+  {id:'rum1',name:'Bacardi Superior',category:'Rum',premium:false,defaultQty:'1.5 oz'},
+  {id:'rum2',name:'Captain Morgan',category:'Rum',premium:false,defaultQty:'1.5 oz'},
+  {id:'gin1',name:'Bombay Sapphire',category:'Gin',premium:true,defaultQty:'1.5 oz'},
+  {id:'gin2',name:'Tanqueray',category:'Gin',premium:false,defaultQty:'1.5 oz'},
+  {id:'teq1',name:'Patron Silver',category:'Tequila',premium:true,defaultQty:'1.5 oz'},
+  {id:'teq2',name:'Jose Cuervo Gold',category:'Tequila',premium:false,defaultQty:'1.5 oz'},
+  {id:'whi1',name:"Jack Daniel's",category:'Whiskey',premium:false,defaultQty:'1.5 oz'},
+  {id:'whi2',name:'Jameson',category:'Whiskey',premium:false,defaultQty:'1.5 oz'},
+  {id:'whi3',name:'Fireball',category:'Whiskey',premium:false,defaultQty:'1.5 oz'},
+  {id:'liq1',name:'Triple Sec',category:'Liqueur',premium:false,defaultQty:'0.5 oz'},
+  {id:'liq2',name:'Blue Curacao',category:'Liqueur',premium:false,defaultQty:'0.5 oz'},
+  {id:'liq3',name:'Peach Schnapps',category:'Liqueur',premium:false,defaultQty:'0.5 oz'},
+  {id:'liq4',name:'Sour Apple Pucker',category:'Liqueur',premium:false,defaultQty:'0.5 oz'},
+  {id:'mix1',name:'Orange Juice',category:'Mixer',premium:false,defaultQty:'3 oz'},
+  {id:'mix2',name:'Cranberry Juice',category:'Mixer',premium:false,defaultQty:'3 oz'},
+  {id:'mix3',name:'Pineapple Juice',category:'Mixer',premium:false,defaultQty:'3 oz'},
+  {id:'mix4',name:'Sour Mix',category:'Mixer',premium:false,defaultQty:'2 oz'},
+  {id:'mix5',name:'Ginger Beer',category:'Mixer',premium:false,defaultQty:'4 oz'},
+  {id:'mix6',name:'Club Soda',category:'Mixer',premium:false,defaultQty:'2 oz'},
+  {id:'mix7',name:'Cola',category:'Mixer',premium:false,defaultQty:'4 oz'},
+  {id:'mix8',name:'Grenadine',category:'Mixer',premium:false,defaultQty:'0.5 oz'},
+  {id:'gar1',name:'Lime Wedge',category:'Garnish',premium:false,defaultQty:'1 wedge'},
+  {id:'gar2',name:'Cherry',category:'Garnish',premium:false,defaultQty:'1 cherry'},
+  {id:'gar3',name:'Olive',category:'Garnish',premium:false,defaultQty:'2 olives'},
+  {id:'gar4',name:'Mint Sprig',category:'Garnish',premium:false,defaultQty:'2 sprigs'},
+  {id:'ext1',name:'Simple Syrup',category:'Extra',premium:false,defaultQty:'0.5 oz'},
+  {id:'ext2',name:'Whipped Cream',category:'Extra',premium:false,defaultQty:'dollop'},
+  {id:'ext3',name:'Salt Rim',category:'Extra',premium:false,defaultQty:'rim'},
+  {id:'ext4',name:'Sugar Rim',category:'Extra',premium:false,defaultQty:'rim'}
+];
+
+var DEFAULT_DRINKS = [
+  {id:'d1',name:'Midtown Mule',creator:'House',type:'Cocktail',glass:'Mug',instructions:'Fill copper mug with ice. Add vodka and lime juice. Top with ginger beer. Garnish with lime wedge.',notes:'',ingredients:[{id:'vod1',qty:'2 oz'},{id:'mix5',qty:'4 oz'},{id:'gar1',qty:'1 wedge'}],printCount:0},
+  {id:'d2',name:'Tropical Sunset',creator:'House',type:'Cocktail',glass:'Collins Glass',instructions:'Build over ice: rum, pineapple, orange juice. Float grenadine. Garnish with cherry.',notes:'',ingredients:[{id:'rum1',qty:'1.5 oz'},{id:'mix3',qty:'3 oz'},{id:'mix1',qty:'2 oz'},{id:'mix8',qty:'0.5 oz'},{id:'gar2',qty:'1 cherry'}],printCount:0},
+  {id:'d3',name:'Blue Lightning',creator:'House',type:'Shot',glass:'Shot Glass',instructions:'Shake vodka, blue curacao, and sour mix with ice. Strain into shot glass.',notes:'',ingredients:[{id:'vod1',qty:'1 oz'},{id:'liq2',qty:'0.5 oz'},{id:'mix4',qty:'0.5 oz'}],printCount:0},
+  {id:'d4',name:'Peach Whiskey Smash',creator:'House',type:'Cocktail',glass:'Rocks Glass',instructions:'Muddle mint and peach schnapps. Add whiskey and ice. Stir gently.',notes:'',ingredients:[{id:'whi1',qty:'2 oz'},{id:'liq3',qty:'1 oz'},{id:'gar4',qty:'2 sprigs'}],printCount:0},
+  {id:'d5',name:'Firecracker',creator:'House',type:'Shot',glass:'Shot Glass',instructions:'Layer Fireball and peach schnapps in shot glass.',notes:'',ingredients:[{id:'whi3',qty:'1 oz'},{id:'liq3',qty:'1 oz'}],printCount:0},
+  {id:'d6',name:'Gin Garden',creator:'House',type:'Cocktail',glass:'Collins Glass',instructions:'Build gin, sour mix, and club soda over ice. Top with mint.',notes:'',ingredients:[{id:'gin1',qty:'2 oz'},{id:'mix4',qty:'2 oz'},{id:'mix6',qty:'2 oz'},{id:'gar4',qty:'3 leaves'}],printCount:0},
+  {id:'d7',name:'Cran-Teq Cooler',creator:'House',type:'Cocktail',glass:'Rocks Glass',instructions:'Shake tequila, triple sec, and cranberry with ice. Strain over fresh ice. Lime wedge garnish.',notes:'',ingredients:[{id:'teq1',qty:'2 oz'},{id:'liq1',qty:'0.5 oz'},{id:'mix2',qty:'3 oz'},{id:'gar1',qty:'1 wedge'}],printCount:0},
+  {id:'d8',name:'Apple Pie Shot',creator:'House',type:'Shot',glass:'Shot Glass',instructions:'Shake whiskey and sour apple pucker with ice. Strain. Top with whipped cream.',notes:'',ingredients:[{id:'whi2',qty:'1 oz'},{id:'liq4',qty:'1 oz'},{id:'ext2',qty:'dollop'}],printCount:0}
+];
+
+// ================= STATE =================
+var currentStep = 1;
+var selectedIngredients = {};
+var lastView = 'home';
+var allDrinks = [];
+var myRecipes = [];
+var editModeId = null;
+var currentRecipeId = null;
+
+// ================= HELPERS =================
+function getInv(id) {
+  for (var i = 0; i < INVENTORY.length; i++) if (INVENTORY[i].id === id) return INVENTORY[i];
+  return null;
+}
+function getDrink(id) {
+  for (var i = 0; i < allDrinks.length; i++) if (allDrinks[i].id === id) return allDrinks[i];
+  return null;
+}
+function getCategories() {
+  var cats = [];
+  var seen = {};
+  for (var i = 0; i < INVENTORY.length; i++) {
+    if (!seen[INVENTORY[i].category]) { seen[INVENTORY[i].category] = true; cats.push(INVENTORY[i].category); }
+  }
+  return cats;
+}
+function calcPrice(ingredients) {
+  var hasPrem = false;
+  for (var i = 0; i < ingredients.length; i++) {
+    var it = getInv(ingredients[i].id);
+    if (it && it.premium) hasPrem = true;
+  }
+  return hasPrem ? 6.50 : 4.50;
+}
+function formatPrice(p) { return '$' + p.toFixed(2); }
+function clone(obj) { return JSON.parse(JSON.stringify(obj)); }
+
+// ================= INIT =================
+function init() {
+  var bg = document.getElementById('bgAnim');
+  for (var i = 0; i < 12; i++) {
+    var b = document.createElement('div');
+    b.className = 'bubble';
+    b.style.left = Math.random() * 100 + '%';
+    b.style.width = b.style.height = (8 + Math.random() * 24) + 'px';
+    b.style.animationDuration = (7 + Math.random() * 9) + 's';
+    b.style.animationDelay = (Math.random() * 6) + 's';
+    bg.appendChild(b);
+  }
+  allDrinks = clone(DEFAULT_DRINKS);
+  myRecipes = [];
+  renderBrowseFilters();
+  renderBrowse('All');
+  renderInvFilters();
+  renderInventory('All');
+}
+
+// ================= NAVIGATION =================
+function showView(name) {
+  var views = document.getElementsByClassName('view');
+  for (var i = 0; i < views.length; i++) views[i].classList.remove('active');
+  var t = document.getElementById('view-' + name);
+  if (t) t.classList.add('active');
+  if (name !== 'recipe') lastView = name;
+  if (name === 'myrecipes') renderMyRecipes();
+  window.scrollTo(0, 0);
+}
+function goHome() { showView('home'); }
+
+// ================= BROWSE =================
+function renderBrowseFilters() {
+  var cats = ['All','Cocktail','Shot','Mocktail','Special'];
+  var bar = document.getElementById('browseFilters');
+  if (!bar) return;
+  var html = '';
+  for (var i = 0; i < cats.length; i++) {
+    html += '<div class="filter-btn ' + (cats[i] === 'All' ? 'active' : '') + '" onclick="filterBrowse(this,'' + cats[i] + '')">' + cats[i] + '</div>';
+  }
+  bar.innerHTML = html;
+}
+function filterBrowse(el, cat) {
+  var chips = el.parentNode.getElementsByClassName('filter-btn');
+  for (var i = 0; i < chips.length; i++) chips[i].classList.remove('active');
+  el.classList.add('active');
+  renderBrowse(cat);
+}
+function renderBrowse(filter) {
+  var grid = document.getElementById('browseGrid');
+  if (!grid) return;
+  var items = [];
+  for (var i = 0; i < allDrinks.length; i++) {
+    if (filter === 'All' || allDrinks[i].type === filter) items.push(allDrinks[i]);
+  }
+  if (items.length === 0) { grid.innerHTML = '<div class="empty"><div class="empty-emoji">DRINK</div><h3>No drinks found</h3></div>'; return; }
+  var html = '';
+  for (var i = 0; i < items.length; i++) {
+    var d = items[i];
+    var price = calcPrice(d.ingredients);
+    var pc = d.printCount || 0;
+    html += '<div class="card" onclick="openRecipe('' + d.id + '')"><div class="card-title">' + d.name + '</div><div class="card-meta">' + d.type + ' - ' + d.glass + '</div><div class="card-price">' + formatPrice(price) + '</div>';
+    if (pc > 0) html += '<div class="card-counter">Printed ' + pc + ' times</div>';
+    html += '</div>';
+  }
+  grid.innerHTML = html;
+}
+
+// ================= INVENTORY =================
+function toggleAddForm() {
+  var f = document.getElementById('addForm');
+  if (f.classList.contains('show')) f.classList.remove('show');
+  else f.classList.add('show');
+}
+function renderInvFilters() {
+  var cats = getCategories();
+  cats.unshift('All');
+  var bar = document.getElementById('invFilters');
+  if (!bar) return;
+  var html = '';
+  for (var i = 0; i < cats.length; i++) {
+    html += '<div class="filter-btn ' + (cats[i] === 'All' ? 'active' : '') + '" onclick="filterInv(this,'' + cats[i] + '')">' + cats[i] + '</div>';
+  }
+  bar.innerHTML = html;
+}
+function filterInv(el, cat) {
+  var chips = el.parentNode.getElementsByClassName('filter-btn');
+  for (var i = 0; i < chips.length; i++) chips[i].classList.remove('active');
+  el.classList.add('active');
+  renderInventory(cat);
+}
+function renderInventory(filter) {
+  var grid = document.getElementById('invGrid');
+  if (!grid) return;
+  var html = '';
+  for (var i = 0; i < INVENTORY.length; i++) {
+    var it = INVENTORY[i];
+    if (filter !== 'All' && it.category !== filter) continue;
+    html += '<div class="card"><div class="card-title">' + it.name + '</div><div class="card-meta">' + it.category;
+    if (it.premium) html += ' - <span style="color:#ffd700;font-weight:800;">PREMIUM</span>';
+    html += '</div><div class="card-meta">Default: ' + it.defaultQty + '</div></div>';
+  }
+  grid.innerHTML = html;
+}
+function addInventoryItem() {
+  var name = document.getElementById('newItemName').value.trim();
+  var cat = document.getElementById('newItemCat').value.trim();
+  var qty = document.getElementById('newItemQty').value.trim() || '1.5 oz';
+  var prem = document.getElementById('newItemPremium').checked;
+  if (!name || !cat) { alert('Enter name and category'); return; }
+  var id = 'ing_' + Date.now();
+  INVENTORY.push({id:id, name:name, category:cat, premium:prem, defaultQty:qty});
+  document.getElementById('newItemName').value = '';
+  document.getElementById('newItemCat').value = '';
+  document.getElementById('newItemQty').value = '1.5 oz';
+  document.getElementById('newItemPremium').checked = false;
+  toggleAddForm();
+  renderInvFilters();
+  renderInventory('All');
+  alert(name + ' added to inventory!');
+}
+
+// ================= CREATE / EDIT =================
+function startCreate() {
+  editModeId = null;
+  selectedIngredients = {};
+  currentStep = 1;
+  document.getElementById('createTitle').textContent = 'Drink Lab';
+  document.getElementById('createName').value = '';
+  document.getElementById('createCreator').value = '';
+  document.getElementById('createType').value = 'Cocktail';
+  document.getElementById('createGlass').value = 'Rocks Glass';
+  document.getElementById('createInstructions').value = '';
+  document.getElementById('createNotes').value = '';
+  updateStepIndicator();
+  showStep(1);
+  showView('create');
+}
+function startEdit(id) {
+  var d = getDrink(id);
+  if (!d) return;
+  editModeId = id;
+  selectedIngredients = {};
+  for (var i = 0; i < d.ingredients.length; i++) selectedIngredients[d.ingredients[i].id] = true;
+  currentStep = 1;
+  document.getElementById('createTitle').textContent = 'Edit Drink';
+  document.getElementById('createName').value = d.name;
+  document.getElementById('createCreator').value = d.creator;
+  document.getElementById('createType').value = d.type;
+  document.getElementById('createGlass').value = d.glass;
+  document.getElementById('createInstructions').value = d.instructions;
+  document.getElementById('createNotes').value = d.notes || '';
+  updateStepIndicator();
+  showStep(1);
+  showView('create');
+}
+function startVariation(id) {
+  var d = getDrink(id);
+  if (!d) return;
+  editModeId = null;
+  selectedIngredients = {};
+  for (var i = 0; i < d.ingredients.length; i++) selectedIngredients[d.ingredients[i].id] = true;
+  currentStep = 1;
+  document.getElementById('createTitle').textContent = 'Make Variation';
+  document.getElementById('createName').value = d.name + ' (Variation)';
+  document.getElementById('createCreator').value = d.creator;
+  document.getElementById('createType').value = d.type;
+  document.getElementById('createGlass').value = d.glass;
+  document.getElementById('createInstructions').value = d.instructions;
+  document.getElementById('createNotes').value = d.notes || '';
+  updateStepIndicator();
+  showStep(1);
+  showView('create');
+}
+function updateStepIndicator() {
+  var dots = document.getElementById('stepIndicator').getElementsByClassName('step-dot');
+  for (var i = 0; i < dots.length; i++) {
+    dots[i].classList.remove('active', 'done');
+    if (i + 1 < currentStep) dots[i].classList.add('done');
+    else if (i + 1 === currentStep) dots[i].classList.add('active');
+  }
+}
+function showStep(n) {
+  for (var i = 1; i <= 4; i++) {
+    var el = document.getElementById('create-step-' + i);
+    if (el) el.style.display = (i === n ? 'block' : 'none');
+  }
+  if (n === 2) { renderCreateFilters(); renderCreateGrid('All'); }
+  if (n === 3) renderSelectedReview();
+  if (n === 4) renderPreview();
+  currentStep = n;
+  updateStepIndicator();
+}
+function nextStep(n) {
+  if (n === 2) {
+    if (!document.getElementById('createName').value.trim()) { alert('Enter a drink name!'); return; }
+  }
+  if (n === 3) {
+    var count = 0;
+    for (var k in selectedIngredients) if (selectedIngredients[k]) count++;
+    if (count === 0) { alert('Select at least one ingredient!'); return; }
+  }
+  showStep(n);
+}
+function prevStep(n) { showStep(n); }
+
+function renderCreateFilters() {
+  var cats = getCategories();
+  cats.unshift('All');
+  var bar = document.getElementById('createFilters');
+  if (!bar) return;
+  var html = '';
+  for (var i = 0; i < cats.length; i++) {
+    html += '<div class="filter-btn ' + (cats[i] === 'All' ? 'active' : '') + '" onclick="filterCreate(this,'' + cats[i] + '')">' + cats[i] + '</div>';
+  }
+  bar.innerHTML = html;
+}
+function filterCreate(el, cat) {
+  var chips = el.parentNode.getElementsByClassName('filter-btn');
+  for (var i = 0; i < chips.length; i++) chips[i].classList.remove('active');
+  el.classList.add('active');
+  renderCreateGrid(cat);
+}
+function renderCreateGrid(filter) {
+  var grid = document.getElementById('createGrid');
+  if (!grid) return;
+  var html = '';
+  for (var i = 0; i < INVENTORY.length; i++) {
+    var it = INVENTORY[i];
+    if (filter !== 'All' && it.category !== filter) continue;
+    var sel = selectedIngredients[it.id];
+    html += '<div class="card ' + (sel ? 'item-selected' : '') + '" onclick="toggleIngredient('' + it.id + '')" style="position:relative;"><div class="card-title">' + it.name + '</div><div class="card-meta">' + it.category + '</div>';
+    if (it.premium) html += '<div class="premium-tag">* PREMIUM (+$2)</div>';
+    html += '</div>';
+  }
+  grid.innerHTML = html;
+  var count = 0;
+  for (var k in selectedIngredients) if (selectedIngredients[k]) count++;
+  document.getElementById('selectedCount').textContent = count;
+}
+function toggleIngredient(id) {
+  if (selectedIngredients[id]) delete selectedIngredients[id];
+  else selectedIngredients[id] = true;
+  var activeChip = document.querySelector('#createFilters .filter-btn.active');
+  var activeText = 'All';
+  if (activeChip) activeText = activeChip.textContent || activeChip.innerText || 'All';
+  renderCreateGrid(activeText);
+}
+function renderSelectedReview() {
+  var container = document.getElementById('selectedReview');
+  if (!container) return;
+  var html = '';
+  for (var id in selectedIngredients) {
+    if (!selectedIngredients[id]) continue;
+    var it = getInv(id);
+    if (!it) continue;
+    html += '<div class="ingredient-row"><span>' + it.name;
+    if (it.premium) html += ' <span style="color:#ffd700;">(* Premium)</span>';
+    html += '</span><span class="qty">' + it.defaultQty + '</span></div>';
+  }
+  container.innerHTML = '<div style="background:rgba(0,0,0,0.3);border-radius:12px;padding:14px;margin-bottom:14px;"><h3 style="margin-top:0;color:#00f3ff;font-size:1.1rem;">Selected Ingredients</h3>' + (html || '<div style="color:#888">None selected</div>') + '</div>';
+}
+function renderPreview() {
+  var name = document.getElementById('createName').value;
+  var creator = document.getElementById('createCreator').value || 'Anonymous';
+  var type = document.getElementById('createType').value;
+  var glass = document.getElementById('createGlass').value;
+  var instructions = document.getElementById('createInstructions').value;
+  var notes = document.getElementById('createNotes').value;
+  var ingredients = [];
+  var ingRows = '';
+  for (var id in selectedIngredients) {
+    if (!selectedIngredients[id]) continue;
+    var it = getInv(id);
+    if (!it) continue;
+    ingredients.push({id:id, qty:it.defaultQty});
+    ingRows += '<div class="ingredient-row"><span>' + it.name + '</span><span class="qty">' + it.defaultQty + '</span></div>';
+  }
+  var price = calcPrice(ingredients);
+  var notesHtml = notes ? '<div class="notes-box">NOTES: ' + notes + '</div>' : '';
+  document.getElementById('createPreview').innerHTML = '<div class="recipe-hero"><div class="recipe-name">' + name + '</div><div class="recipe-creator">Created by ' + creator + '</div><div class="recipe-badges"><span class="badge">' + type + '</span><span class="badge">' + glass + '</span><span class="price-badge">' + formatPrice(price) + '</span></div><div class="ingredient-list">' + ingRows + '</div><div style="text-align:left;white-space:pre-wrap;font-size:1rem;line-height:1.5;">' + instructions + '</div>' + notesHtml + '</div>';
+}
+function saveCreation() {
+  var name = document.getElementById('createName').value.trim();
+  var creator = document.getElementById('createCreator').value.trim() || 'Anonymous';
+  var type = document.getElementById('createType').value;
+  var glass = document.getElementById('createGlass').value;
+  var instructions = document.getElementById('createInstructions').value;
+  var notes = document.getElementById('createNotes').value;
+  var ingredients = [];
+  for (var id in selectedIngredients) {
+    if (!selectedIngredients[id]) continue;
+    var it = getInv(id);
+    if (it) ingredients.push({id:id, qty:it.defaultQty});
+  }
+  var newId = editModeId ? editModeId : 'custom_' + Date.now();
+  var drink = {id:newId, name:name, creator:creator, type:type, glass:glass, instructions:instructions, notes:notes, ingredients:ingredients, isCustom:true, printCount:0};
+
+  if (editModeId) {
+    for (var i = 0; i < allDrinks.length; i++) {
+      if (allDrinks[i].id === editModeId) {
+        drink.printCount = allDrinks[i].printCount || 0;
+        allDrinks[i] = drink;
+        break;
+      }
+    }
+    for (var i = 0; i < myRecipes.length; i++) {
+      if (myRecipes[i].id === editModeId) { myRecipes[i] = drink; break; }
+    }
+    alert(name + ' updated!');
+  } else {
+    allDrinks.push(drink);
+    myRecipes.push(drink);
+    alert(name + ' by ' + creator + ' saved!');
+  }
+  editModeId = null;
+  renderBrowse('All');
+  showView('browse');
+}
+
+// ================= RECIPE =================
+function openRecipe(id) {
+  currentRecipeId = id;
+  var d = getDrink(id);
+  if (!d) return;
+  var price = calcPrice(d.ingredients);
+  var pc = d.printCount || 0;
+  var ingRows = '';
+  for (var i = 0; i < d.ingredients.length; i++) {
+    var it = getInv(d.ingredients[i].id);
+    var name = it ? it.name : d.ingredients[i].id;
+    ingRows += '<div class="ingredient-row"><span>' + name + '</span><span class="qty">' + d.ingredients[i].qty + '</span></div>';
+  }
+  var notesHtml = d.notes ? '<div class="notes-box">BARTENDER NOTES: ' + d.notes + '</div>' : '';
+  document.getElementById('recipeContent').innerHTML = '<div class="recipe-hero"><div class="recipe-name">' + d.name + '</div><div class="recipe-creator">' + (d.isCustom ? 'Crafted by ' : 'House Recipe - ') + d.creator + '</div><div class="recipe-badges"><span class="badge">' + d.type + '</span><span class="badge">' + d.glass + '</span><span class="price-badge">' + formatPrice(price) + '</span></div><div class="print-counter">Printed ' + pc + ' times</div><div class="ingredient-list">' + ingRows + '</div><div style="text-align:left;white-space:pre-wrap;font-size:1.05rem;line-height:1.6;">' + d.instructions + '</div>' + notesHtml + '</div>';
+
+  var actions = '<div class="btn-row"><button class="btn btn-primary" onclick="printRecipe()">Print Ticket (' + formatPrice(price) + ')</button></div>';
+  actions += '<div class="btn-row"><button class="btn btn-outline btn-small" onclick="startEdit('' + d.id + '')">Edit / Rename</button><button class="btn btn-outline btn-small" onclick="startVariation('' + d.id + '')">Make Variation</button></div>';
+  if (d.isCustom) actions += '<div class="btn-row"><button class="btn btn-danger btn-small" onclick="deleteRecipe('' + d.id + '')">Delete</button></div>';
+  actions += '<div class="btn-row"><button class="btn btn-outline" onclick="showView(lastView)">Back</button></div>';
+  document.getElementById('recipeActions').innerHTML = actions;
+  showView('recipe');
+}
+function printRecipe() {
+  var d = getDrink(currentRecipeId);
+  if (d) {
+    d.printCount = (d.printCount || 0) + 1;
+  }
+  window.print();
+  openRecipe(currentRecipeId);
+}
+function deleteRecipe(id) {
+  if (!confirm('Delete this recipe?')) return;
+  var filtered = [];
+  for (var i = 0; i < allDrinks.length; i++) if (allDrinks[i].id !== id) filtered.push(allDrinks[i]);
+  allDrinks = filtered;
+  var filtered2 = [];
+  for (var i = 0; i < myRecipes.length; i++) if (myRecipes[i].id !== id) filtered2.push(myRecipes[i]);
+  myRecipes = filtered2;
+  renderBrowse('All');
+  showView('myrecipes');
+}
+
+// ================= MY RECIPES =================
+function renderMyRecipes() {
+  var container = document.getElementById('myRecipesList');
+  if (!container) return;
+  if (myRecipes.length === 0) {
+    container.innerHTML = '<div class="empty"><div class="empty-emoji">EMPTY</div><h3>No creations yet</h3><p>Go to "Create Your Own" to make one!</p><button class="btn btn-primary" style="max-width:300px;margin:15px auto 0;" onclick="startCreate()">Create Now</button></div>';
+    return;
+  }
+  var cards = '';
+  for (var i = 0; i < myRecipes.length; i++) {
+    var d = myRecipes[i];
+    var price = calcPrice(d.ingredients);
+    cards += '<div class="card" onclick="openRecipe('' + d.id + '')"><div class="card-title">' + d.name + '</div><div class="card-meta">by ' + d.creator + '</div><div class="card-price">' + formatPrice(price) + '</div></div>';
+  }
+  var exportText = '';
+  for (var i = 0; i < myRecipes.length; i++) {
+    var d = myRecipes[i];
+    var ing = '';
+    for (var j = 0; j < d.ingredients.length; j++) {
+      var it = getInv(d.ingredients[j].id);
+      if (ing) ing += ', ';
+      ing += (it ? it.name : d.ingredients[j].id) + ': ' + d.ingredients[j].qty;
+    }
+    var price = calcPrice(d.ingredients);
+    if (exportText) exportText += '
+
+';
+    exportText += (i + 1) + '. ' + d.name + ' (' + d.type + ') by ' + d.creator + '
+   Price: ' + formatPrice(price) + '
+   Glass: ' + d.glass + '
+   Ingredients: ' + ing + '
+   Instructions: ' + d.instructions.replace(/
+/g, ' ') + (d.notes ? '
+   Notes: ' + d.notes : '');
+  }
+  container.innerHTML = '<div class="card-grid">' + cards + '</div><div style="margin-top:20px;background:rgba(20,20,35,0.9);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:18px;"><h3 style="margin-top:0;color:#ffd700;font-size:1.1rem;">Export Recipes</h3><p style="color:#888;font-size:0.9rem;">Copy this before closing the page. Recipes are NOT saved after you close.</p><textarea class="export-box" readonly onclick="this.select()">' + exportText + '</textarea><button class="btn btn-outline btn-small" style="margin-top:8px;width:auto;display:inline-block;" onclick="downloadRecipes()">Download as File</button><button class="btn btn-danger btn-small" style="margin-top:10px;width:auto;display:inline-block;" onclick="clearMyRecipes()">Clear All</button></div>';
+}
+function downloadRecipes() {
+  var exportText = '';
+  for (var i = 0; i < myRecipes.length; i++) {
+    var d = myRecipes[i];
+    var ing = '';
+    for (var j = 0; j < d.ingredients.length; j++) {
+      var it = getInv(d.ingredients[j].id);
+      if (ing) ing += ', ';
+      ing += (it ? it.name : d.ingredients[j].id) + ': ' + d.ingredients[j].qty;
+    }
+    var price = calcPrice(d.ingredients);
+    if (exportText) exportText += '
+
+';
+    exportText += (i + 1) + '. ' + d.name + ' (' + d.type + ') by ' + d.creator + '
+   Price: ' + formatPrice(price) + '
+   Glass: ' + d.glass + '
+   Ingredients: ' + ing + '
+   Instructions: ' + d.instructions.replace(/
+/g, ' ') + (d.notes ? '
+   Notes: ' + d.notes : '');
+  }
+  var blob = new Blob([exportText], {type: 'text/plain'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'midtown-recipes.txt';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  alert('Recipes downloaded!');
+}
+function clearMyRecipes() {
+  if (!confirm('Delete all custom recipes?')) return;
+  var filtered = [];
+  for (var i = 0; i < allDrinks.length; i++) if (!allDrinks[i].isCustom) filtered.push(allDrinks[i]);
+  allDrinks = filtered;
+  myRecipes = [];
+  renderMyRecipes();
+  renderBrowse('All');
+}
+
+// Start
+init();
+</script>
+</body>
+</html>
