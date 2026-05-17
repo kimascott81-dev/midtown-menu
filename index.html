@@ -386,12 +386,25 @@
     </div>
 
     <!-- BROWSE -->
-    <div id="view-browse" class="view">
-      <div class="section-title">📖 Drink Menu</div>
-      <div class="section-sub">Tap any drink to see the recipe</div>
-      <div class="filter-bar" id="browseFilters"></div>
-      <div class="card-grid" id="browseGrid"></div>
+    
+  function renderBrowse(filter) {
+  const grid = document.getElementById('browseGrid');
+  if(!grid) return;
+  const items = filter==='All' ? allDrinks : allDrinks.filter(d=>d.type===filter);
+  if(items.length===0) { grid.innerHTML='<div class="empty-state"><div class="big-emoji">🍸</div><h3>No drinks found</h3></div>'; return; }
+  grid.innerHTML = items.map(d=>{
+    const price = calculatePrice(d.ingredients); // Calculates the price
+    return `
+    <div class="item-card" onclick="openRecipe('${d.id}')">
+      <span class="item-emoji">${d.emoji}</span>
+      <div class="item-name">${d.name}</div>
+      <div class="item-meta" style="margin-bottom: 6px;">${d.type} • ${d.glass}</div>
+      <div style="color: var(--neon-lime); font-weight: 800; font-size: 0.95rem;">${price}</div>
     </div>
+    `;
+  }).join('');
+}
+
 
     <!-- INVENTORY -->
     <div id="view-inventory" class="view">
@@ -954,19 +967,24 @@ function renderMyRecipes() {
   }
   container.innerHTML = `
     <div class="card-grid" style="margin-top:20px;">
-      ${myRecipes.map(d=>`
+      ${myRecipes.map(d=>{
+        const price = calculatePrice(d.ingredients); // Calculates the price
+        return `
         <div class="item-card" onclick="openRecipe('${d.id}')">
           <span class="item-emoji">${d.emoji}</span>
           <div class="item-name">${d.name}</div>
-          <div class="item-meta">by ${d.creator}</div>
+          <div class="item-meta" style="margin-bottom: 6px;">by ${d.creator}</div>
+          <div style="color: var(--neon-lime); font-weight: 800; font-size: 0.95rem;">${price}</div>
         </div>
-      `).join('')}
+        `;
+      }).join('')}
     </div>
     <div style="margin-top:30px; text-align:center;">
       <button class="btn btn-danger" style="max-width:300px;" onclick="clearMyRecipes()">🗑️ Clear All My Recipes</button>
     </div>
   `;
 }
+
 function clearMyRecipes() {
   if(!confirm('Delete all your custom recipes? This cannot be undone.')) return;
   myRecipes = [];
