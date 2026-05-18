@@ -272,20 +272,49 @@
   }
   .step-dot.active { background: var(--neon-cyan); box-shadow: 0 0 10px var(--neon-cyan); }
   .step-dot.done { background: var(--neon-lime); }
-
-  /* Print Styles */
+  /* Print Styles for Thermal Receipt Printers */
   @media print {
+    @page { margin: 0; size: 80mm auto; } /* Forces 3-inch receipt width */
+    
     header, .no-print, .bg-animation, .bubble, .step-indicator, .section-title, .section-sub { display: none !important; }
-    body { background: white; color: black; overflow: visible; }
+    
+    body { 
+      background: white; 
+      color: black; 
+      overflow: visible; 
+      width: 80mm; /* Match receipt width */
+      padding: 5mm; 
+      font-family: monospace; /* Best font for receipt printers */
+    }
+    
     #app { height: auto; }
     main { overflow: visible; padding: 0; }
-    .recipe-hero { border: 2px solid #000; box-shadow: none; page-break-inside: avoid; margin: 0; }
+    
+    .recipe-hero { 
+      border: 2px dashed #000; /* Looks like a kitchen ticket */
+      box-shadow: none; 
+      page-break-inside: avoid; 
+      margin: 0; 
+      padding: 10px;
+      border-radius: 0;
+    }
+    
+    .recipe-emoji { font-size: 2rem; margin-bottom: 5px; animation: none; }
+    .recipe-name { font-size: 1.5rem; }
+    .ingredient-list { background: transparent; padding: 0; color: black; border-top: 1px solid black; border-bottom: 1px solid black; border-radius: 0;}
+    .ingredient-row { border-bottom: 1px dotted #ccc; color: black; }
+    .ingredient-qty { color: black; }
+    .recipe-badge { color: black; border-color: black; background: transparent; }
+    
     .view { display: none !important; }
     #view-recipe.view.active { display: block !important; }
     #view-create.view.active { display: block !important; }
     #create-step-1, #create-step-2, #create-step-3 { display: none !important; }
     #create-step-4 { display: block !important; }
   }
+
+  
+ 
 
   /* Modal */
   .modal-overlay {
