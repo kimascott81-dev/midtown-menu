@@ -542,8 +542,9 @@ function debug(msg) {
 }
 
 // ================= DATA =================
-  const INVENTORY = [ 
-  // --- WELL (Standard) ---
+  
+ const INVENTORY = [
+ // --- WELL (Standard) ---
   { id:'w_vod1', name:'360 Vodka', category:'Vodka', emoji:'🍸', tier: 'Well' },
   { id:'w_whi1', name:'Cinnabomb', category:'Whiskey', emoji:'🥃', tier: 'Well' },
 
@@ -600,67 +601,47 @@ function debug(msg) {
   { id:'t_bou2', name:'Knob Creek', category:'Bourbon', emoji:'🥃', premium: true, tier: 'Top Shelf' },
   { id:'t_vod2', name:'Pink Whitney', category:'Vodka', emoji:'🍋', premium: true, tier: 'Top Shelf' },
 
-  // --- MIXERS & GARNISHES (Kept from original so drinks can be made) ---
-  { id:'mix1', name:'Orange Juice', category:'Mixer', emoji:'🍊' },
-  { id:'mix2', name:'Cranberry Juice', category:'Mixer', emoji:'🫐' },
-  { id:'mix3', name:'Pineapple Juice', category:'Mixer', emoji:'🍍' },
-  { id:'mix4', name:'Sour Mix', category:'Mixer', emoji:'🍋' },
-  { id:'mix5', name:'Ginger Beer', category:'Mixer', emoji:'🫚' },
-  { id:'mix6', name:'Club Soda', category:'Mixer', emoji:'💧' },
-  { id:'mix7', name:'Cola', category:'Mixer', emoji:'🥤' },
-  { id:'mix8', name:'Grenadine', category:'Mixer', emoji:'🌹' },
+  // --- MIXERS, JUICES & SODAS ---
+  { id:'m_redb', name:'Red Bull', category:'Mixer', emoji:'⚡' },
+  { id:'m_soda', name:'Soda (Fountain)', category:'Mixer', emoji:'🥤' },
+  { id:'m_wate', name:'Water Bottle', category:'Mixer', emoji:'💧' },
+  { id:'m_fcju', name:'Finest Call Juice', category:'Mixer', emoji:'🧃' },
+  { id:'m_fcsy', name:'Finest Call Syrup', category:'Mixer', emoji:'🍯' },
+  { id:'m_lime', name:'Lime Juice', category:'Mixer', emoji:'🍋' },
+  { id:'m_simp', name:'Simple Syrup', category:'Mixer', emoji:'🍯' },
+  { id:'m_cran', name:'Cranberry Juice', category:'Mixer', emoji:'🫐' },
+  { id:'m_pine', name:'Pineapple Juice', category:'Mixer', emoji:'🍍' },
+  { id:'m_oran', name:'Orange Juice', category:'Mixer', emoji:'🍊' },
+  { id:'m_7up',  name:'7UP', category:'Mixer', emoji:'🍋' },
+  { id:'m_coke', name:'Coke', category:'Mixer', emoji:'🥤' },
+  { id:'m_drpe', name:'Dr Pepper', category:'Mixer', emoji:'🥤' },
+  { id:'m_root', name:'Root Beer', category:'Mixer', emoji:'🍺' },
+  { id:'m_diet', name:'Diet Coke', category:'Mixer', emoji:'🥤' },
+
+  // --- STANDARD LIQUEURS (From new list) ---
+  { id:'l_blue', name:'Blue Curacao', category:'Liqueur', emoji:'💎', tier: 'Well' },
+  { id:'l_peac', name:'Peach Schnapps', category:'Liqueur', emoji:'🍑', tier: 'Well' },
+  { id:'l_appl', name:'Apple Pucker', category:'Liqueur', emoji:'🍏', tier: 'Well' },
+  { id:'l_wate', name:'Watermelon Pucker', category:'Liqueur', emoji:'🍉', tier: 'Well' },
+  { id:'l_trip', name:'Triple Sec', category:'Liqueur', emoji:'🍊', tier: 'Well' },
+  { id:'l_butt', name:'Buttershots', category:'Liqueur', emoji:'🧈', tier: 'Well' },
+  { id:'l_cher', name:'Cherry Pucker', category:'Liqueur', emoji:'🍒', tier: 'Well' },
+  { id:'l_trop', name:'Tropical Isle', category:'Liqueur', emoji:'🏝️', tier: 'Well' },
+  { id:'l_stra', name:'Strawberry Liqueur', category:'Liqueur', emoji:'🍓', tier: 'Well' },
+  { id:'l_amar', name:'Amaretto', category:'Liqueur', emoji:'🌰', tier: 'Well' },
+  { id:'l_melo', name:'Melon Liqueur', category:'Liqueur', emoji:'🍈', tier: 'Well' },
+  { id:'l_hotd', name:'Hot Damn', category:'Liqueur', emoji:'🔥', tier: 'Well' },
+  { id:'l_razm', name:'Razmatazz', category:'Liqueur', emoji:'🍇', tier: 'Well' },
+
+  // --- GARNISHES & EXTRAS ---
   { id:'gar1', name:'Lime Wedge', category:'Garnish', emoji:'🍈' },
   { id:'gar2', name:'Cherry', category:'Garnish', emoji:'🍒' },
   { id:'gar3', name:'Olive', category:'Garnish', emoji:'🫒' },
   { id:'gar4', name:'Mint Sprig', category:'Garnish', emoji:'🌿' },
-  { id:'ext1', name:'Simple Syrup', category:'Extra', emoji:'🍯' },
   { id:'ext2', name:'Whipped Cream', category:'Extra', emoji:'🍦' },
   { id:'ext3', name:'Salt Rim', category:'Extra', emoji:'🧂' },
   { id:'ext4', name:'Sugar Rim', category:'Extra', emoji:'✨' }
-];
 
-
-const DEFAULT_DRINKS = [
-  {
-    id:'d1', name:'Midtown Mule', creator:'House', type:'Cocktail', glass:'Mug',
-    emoji:'🫚', instructions:'Fill copper mug with ice. Add vodka and lime juice. Top with ginger beer. Garnish with lime wedge.',
-    ingredients:[{id:'vod1', qty:'2 oz'}, {id:'mix5', qty:'4 oz'}, {id:'gar1', qty:'1 wedge'}]
-  },
-  {
-    id:'d2', name:'Tropical Sunset', creator:'House', type:'Cocktail', glass:'Collins Glass',
-    emoji:'🌅', instructions:'Build over ice: rum, pineapple, orange juice. Float grenadine. Garnish with cherry.',
-    ingredients:[{id:'rum1', qty:'1.5 oz'}, {id:'mix3', qty:'3 oz'}, {id:'mix1', qty:'2 oz'}, {id:'mix8', qty:'0.5 oz'}, {id:'gar2', qty:'1 cherry'}]
-  },
-  {
-    id:'d3', name:'Blue Lightning', creator:'House', type:'Shot', glass:'Shot Glass',
-    emoji:'⚡', instructions:'Shake vodka, blue curaçao, and sour mix with ice. Strain into shot glass.',
-    ingredients:[{id:'vod1', qty:'1 oz'}, {id:'liq2', qty:'0.5 oz'}, {id:'mix4', qty:'0.5 oz'}]
-  },
-  {
-    id:'d4', name:'Peach Whiskey Smash', creator:'House', type:'Cocktail', glass:'Rocks Glass',
-    emoji:'🍑', instructions:'Muddle mint and peach schnapps. Add whiskey and ice. Stir gently.',
-    ingredients:[{id:'whi1', qty:'2 oz'}, {id:'liq3', qty:'1 oz'}, {id:'gar4', qty:'2 sprigs'}]
-  },
-  {
-    id:'d5', name:'Firecracker', creator:'House', type:'Shot', glass:'Shot Glass',
-    emoji:'🧨', instructions:'Layer Fireball and peach schnapps in shot glass.',
-    ingredients:[{id:'whi3', qty:'1 oz'}, {id:'liq3', qty:'1 oz'}]
-  },
-  {
-    id:'d6', name:'Gin Garden', creator:'House', type:'Cocktail', glass:'Collins Glass',
-    emoji:'🌿', instructions:'Build gin, sour mix, and club soda over ice. Top with mint.',
-    ingredients:[{id:'gin1', qty:'2 oz'}, {id:'mix4', qty:'2 oz'}, {id:'mix6', qty:'2 oz'}, {id:'gar4', qty:'3 leaves'}]
-  },
-  {
-    id:'d7', name:'Cran-Teq Cooler', creator:'House', type:'Cocktail', glass:'Rocks Glass',
-    emoji:'🫐', instructions:'Shake tequila, triple sec, and cranberry with ice. Strain over fresh ice. Lime wedge garnish.',
-    ingredients:[{id:'teq1', qty:'2 oz'}, {id:'liq1', qty:'0.5 oz'}, {id:'mix2', qty:'3 oz'}, {id:'gar1', qty:'1 wedge'}]
-  },
-  {
-    id:'d8', name:'Apple Pie Shot', creator:'House', type:'Shot', glass:'Shot Glass',
-    emoji:'🥧', instructions:'Shake whiskey and sour apple pucker with ice. Strain. Top with whipped cream.',
-    ingredients:[{id:'whi2', qty:'1 oz'}, {id:'liq4', qty:'1 oz'}, {id:'ext2', qty:'dollop'}]
-  },
 ];
 
 // ================= STATE =================
