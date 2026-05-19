@@ -313,9 +313,6 @@
     #create-step-4 { display: block !important; }
   }
 
-  
- 
-
   /* Modal */
   .modal-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -542,9 +539,8 @@ function debug(msg) {
 }
 
 // ================= DATA =================
-  
- const INVENTORY = [
- // --- WELL (Standard) ---
+const INVENTORY = [
+  // --- WELL (Standard) ---
   { id:'w_vod1', name:'360 Vodka', category:'Vodka', emoji:'🍸', tier: 'Well' },
   { id:'w_whi1', name:'Cinnabomb', category:'Whiskey', emoji:'🥃', tier: 'Well' },
 
@@ -641,8 +637,8 @@ function debug(msg) {
   { id:'ext2', name:'Whipped Cream', category:'Extra', emoji:'🍦' },
   { id:'ext3', name:'Salt Rim', category:'Extra', emoji:'🧂' },
   { id:'ext4', name:'Sugar Rim', category:'Extra', emoji:'✨' }
-
 ];
+
 const DEFAULT_DRINKS = [
   {
     id:'d1', name:'Midtown Mule', creator:'House', type:'Cocktail', glass:'Mug',
@@ -732,8 +728,9 @@ function init() {
     debug('localStorage NOT available: '+e.message);
   }
 
-  allDrinks = safeGet('midtown_drinks', [...DEFAULT_DRINKS]);
-  myRecipes = safeGet('midtown_myrecipes', []);
+  // UPDATED STORAGE KEYS SO THE BROWSER LOADS THE NEW DATA
+  allDrinks = safeGet('midtown_drinks_v2', [...DEFAULT_DRINKS]);
+  myRecipes = safeGet('midtown_myrecipes_v2', []);
 
   // Bubbles
   const bg = document.getElementById('bgAnim');
@@ -1017,8 +1014,9 @@ function saveCreation() {
     showToast('Recipe Saved!'); 
   }
 
-  safeSet('midtown_drinks', allDrinks);
-  safeSet('midtown_myrecipes', myRecipes);
+  // UPDATED STORAGE KEYS
+  safeSet('midtown_drinks_v2', allDrinks);
+  safeSet('midtown_myrecipes_v2', myRecipes);
 
   editingRecipeId = null;
   renderBrowse('All');
@@ -1112,8 +1110,11 @@ function clearMyRecipes() {
   if(!confirm('Delete all your custom recipes? This cannot be undone.')) return;
   myRecipes = [];
   allDrinks = allDrinks.filter(d=>!d.isCustom);
-  safeSet('midtown_myrecipes', myRecipes);
-  safeSet('midtown_drinks', allDrinks);
+  
+  // UPDATED STORAGE KEYS
+  safeSet('midtown_myrecipes_v2', myRecipes);
+  safeSet('midtown_drinks_v2', allDrinks);
+  
   renderMyRecipes();
   renderBrowse('All');
   showToast('Recipes cleared');
@@ -1166,4 +1167,3 @@ if(document.readyState === 'loading') {
 </script>
 </body>
 </html>
-    
