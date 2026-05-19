@@ -643,6 +643,48 @@ function debug(msg) {
   { id:'ext4', name:'Sugar Rim', category:'Extra', emoji:'✨' }
 
 ];
+const DEFAULT_DRINKS = [
+  {
+    id:'d1', name:'Midtown Mule', creator:'House', type:'Cocktail', glass:'Mug',
+    emoji:'🫚', instructions:'Fill copper mug with ice. Add vodka and lime juice. Top with 7UP. Garnish with lime wedge.',
+    ingredients:[{id:'p_vod2', qty:'2 oz'}, {id:'m_lime', qty:'0.5 oz'}, {id:'m_7up', qty:'3 oz'}, {id:'gar1', qty:'1 wedge'}]
+  },
+  {
+    id:'d2', name:'Tropical Sunset', creator:'House', type:'Cocktail', glass:'Collins Glass',
+    emoji:'🌅', instructions:'Build over ice: rum, pineapple, and orange juice. Float a splash of cherry pucker. Garnish with cherry.',
+    ingredients:[{id:'c_rum3', qty:'1.5 oz'}, {id:'m_pine', qty:'2 oz'}, {id:'m_oran', qty:'2 oz'}, {id:'l_cher', qty:'0.5 oz'}, {id:'gar2', qty:'1 cherry'}]
+  },
+  {
+    id:'d3', name:'Blue Lightning', creator:'House', type:'Shot', glass:'Shot Glass',
+    emoji:'⚡', instructions:'Shake vodka, blue curaçao, and Finest Call juice with ice. Strain into shot glass.',
+    ingredients:[{id:'w_vod1', qty:'1 oz'}, {id:'l_blue', qty:'0.5 oz'}, {id:'m_fcju', qty:'0.5 oz'}]
+  },
+  {
+    id:'d4', name:'Peach Whiskey Smash', creator:'House', type:'Cocktail', glass:'Rocks Glass',
+    emoji:'🍑', instructions:'Muddle mint and peach schnapps. Add Jack Daniels and ice. Stir gently.',
+    ingredients:[{id:'p_whi12', qty:'2 oz'}, {id:'l_peac', qty:'1 oz'}, {id:'gar4', qty:'2 sprigs'}]
+  },
+  {
+    id:'d5', name:'Firecracker', creator:'House', type:'Shot', glass:'Shot Glass',
+    emoji:'🧨', instructions:'Layer Fireball and peach schnapps in shot glass.',
+    ingredients:[{id:'c_whi1', qty:'1 oz'}, {id:'l_peac', qty:'1 oz'}]
+  },
+  {
+    id:'d6', name:'Gin Garden', creator:'House', type:'Cocktail', glass:'Collins Glass',
+    emoji:'🌿', instructions:'Build Tanqueray, Finest Call juice, and club soda over ice. Top with mint.',
+    ingredients:[{id:'t_gin1', qty:'2 oz'}, {id:'m_fcju', qty:'2 oz'}, {id:'m_soda', qty:'2 oz'}, {id:'gar4', qty:'3 leaves'}]
+  },
+  {
+    id:'d7', name:'Cran-Teq Cooler', creator:'House', type:'Cocktail', glass:'Rocks Glass',
+    emoji:'🫐', instructions:'Shake Jose Cuervo, triple sec, and cranberry with ice. Strain over fresh ice. Lime wedge garnish.',
+    ingredients:[{id:'p_teq1', qty:'2 oz'}, {id:'l_trip', qty:'0.5 oz'}, {id:'m_cran', qty:'3 oz'}, {id:'gar1', qty:'1 wedge'}]
+  },
+  {
+    id:'d8', name:'Apple Pie Shot', creator:'House', type:'Shot', glass:'Shot Glass',
+    emoji:'🥧', instructions:'Shake Jameson and Apple Pucker with ice. Strain. Top with whipped cream.',
+    ingredients:[{id:'p_whi9', qty:'1 oz'}, {id:'l_appl', qty:'1 oz'}, {id:'ext2', qty:'dollop'}]
+  }
+];
 
 // ================= STATE =================
 let currentStep = 1;
