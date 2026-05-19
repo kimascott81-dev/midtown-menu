@@ -1,4 +1,48 @@
-: 0.4;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Midtown Mixology — Interactive Drink Lab</title>
+<style>
+  :root {
+    --neon-cyan: #00f3ff;
+    --neon-pink: #ff00aa;
+    --neon-gold: #ffd700;
+    --neon-lime: #39ff14;
+    --dark-bg: #0a0a12;
+    --panel-bg: rgba(20, 20, 35, 0.85);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --text-primary: #ffffff;
+    --text-secondary: #b0b0c0;
+    --danger: #ff3366;
+    --success: #00ff88;
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    margin: 0; padding: 0;
+    width: 100%; height: 100%;
+    background: var(--dark-bg);
+    color: var(--text-primary);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    overflow: hidden;
+    touch-action: manipulation;
+  }
+
+  /* Animated Background */
+  .bg-animation {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    z-index: 0; pointer-events: none;
+    background: radial-gradient(ellipse at 20% 50%, rgba(255,0,170,0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(0,243,255,0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 80%, rgba(255,215,0,0.1) 0%, transparent 50%);
+  }
+  .bubble {
+    position: absolute; bottom: -50px;
+    background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8), rgba(255,255,255,0.1));
+    border-radius: 50%; opacity: 0.4;
     animation: rise 8s infinite ease-in;
   }
   @keyframes rise {
@@ -498,25 +542,65 @@ function debug(msg) {
 }
 
 // ================= DATA =================
-const INVENTORY = [
-  // Premium tagging example included
-  { id:'vod1', name:"Tito's Vodka", category:'Vodka', emoji:'🍸' }, 
-  { id:'vod2', name:"Deep Eddy's", category:'Vodka', emoji:'🍸', premium: true },
-  { id:'vod3', name:'Ketel One', category:'Vodka', emoji:'🍸', premium: true }, 
-  { id:'rum1', name:'Bacardi Superior', category:'Rum', emoji:'🥥' },
-  { id:'rum2', name:'Captain Morgan', category:'Rum', emoji:'🏴‍☠️' },
-  { id:'gin1', name:'Bombay Sapphire', category:'Gin', emoji:'🫐' },
-  { id:'gin2', name:'Tanqueray', category:'Gin', emoji:'🌿' },
-  { id:'teq1', name:'Patrón Silver', category:'Tequila', emoji:'🌵', premium: true },
-  { id:'teq2', name:'Jose Cuervo Gold', category:'Tequila', emoji:'🌅' },
-  { id:'whi1', name:"Jack Daniel's", category:'Whiskey', emoji:'🥃' },
-  { id:'whi2', name:'Jameson', category:'Whiskey', emoji:'☘️' },
-  { id:'whi3', name:'Fireball', category:'Whiskey', emoji:'🔥' },
-  { id:'whi4', name:'Evan Williams', category:'Whiskey', emoji:'🥃' },
-  { id:'liq1', name:'Triple Sec', category:'Liqueur', emoji:'🍊' },
-  { id:'liq2', name:'Blue Curaçao', category:'Liqueur', emoji:'💎' },
-  { id:'liq3', name:'Peach Schnapps', category:'Liqueur', emoji:'🍑' },
-  { id:'liq4', name:'Sour Apple Pucker', category:'Liqueur', emoji:'🍏' },
+  const INVENTORY = [
+  // --- WELL (Standard) ---
+  { id:'w_vod1', name:'360 Vodka', category:'Vodka', emoji:'🍸', tier: 'Well' },
+  { id:'w_whi1', name:'Cinnabomb', category:'Whiskey', emoji:'🥃', tier: 'Well' },
+
+  // --- CALL (Standard) ---
+  { id:'c_liq1', name:'Kinky Liqueur', category:'Liqueur', emoji:'🍹', tier: 'Call' },
+  { id:'c_vod1', name:'Deep Eddy Vodka', category:'Vodka', emoji:'🍸', tier: 'Call' },
+  { id:'c_vod2', name:'Smirnoff', category:'Vodka', emoji:'🍸', tier: 'Call' },
+  { id:'c_vod3', name:'UV Vodka', category:'Vodka', emoji:'🍸', tier: 'Call' },
+  { id:'c_liq2', name:'Licor 43', category:'Liqueur', emoji:'🍹', tier: 'Call' },
+  { id:'c_liq3', name:'Kahlua', category:'Liqueur', emoji:'☕', tier: 'Call' },
+  { id:'c_liq4', name:'Tequila Rose', category:'Liqueur', emoji:'🍓', tier: 'Call' },
+  { id:'c_liq5', name:"Dr. McGillicuddy's", category:'Liqueur', emoji:'🧊', tier: 'Call' },
+  { id:'c_rum1', name:'Blue Chair Bay', category:'Rum', emoji:'🥥', tier: 'Call' },
+  { id:'c_whi1', name:'Fireball', category:'Whiskey', emoji:'🔥', tier: 'Call' },
+  { id:'c_rum2', name:'Malibu', category:'Rum', emoji:'🥥', tier: 'Call' },
+  { id:'c_rum3', name:'Bacardi', category:'Rum', emoji:'🏴‍☠️', tier: 'Call' },
+  { id:'c_vod4', name:"Burnett's Raspberry", category:'Vodka', emoji:'🫐', tier: 'Call' },
+
+  // --- PREMIUM ($6.50) ---
+  { id:'p_whi1', name:"Evan Williams Apple", category:'Whiskey', emoji:'🍏', premium: true, tier: 'Premium' },
+  { id:'p_whi2', name:"Evan Williams Cherry", category:'Whiskey', emoji:'🍒', premium: true, tier: 'Premium' },
+  { id:'p_vod1', name:'Skyy Vodka', category:'Vodka', emoji:'🍸', premium: true, tier: 'Premium' },
+  { id:'p_teq1', name:'Jose Cuervo', category:'Tequila', emoji:'🌅', premium: true, tier: 'Premium' },
+  { id:'p_teq2', name:'Lunazul', category:'Tequila', emoji:'🌵', premium: true, tier: 'Premium' },
+  { id:'p_liq1', name:'Baileys', category:'Liqueur', emoji:'☕', premium: true, tier: 'Premium' },
+  { id:'p_liq2', name:'Rum Chata', category:'Liqueur', emoji:'🥛', premium: true, tier: 'Premium' },
+  { id:'p_whi3', name:'Southern Comfort', category:'Whiskey', emoji:'🥃', premium: true, tier: 'Premium' },
+  { id:'p_whi4', name:'Crown Royal', category:'Whiskey', emoji:'👑', premium: true, tier: 'Premium' },
+  { id:'p_whi5', name:'Crown Royal Apple', category:'Whiskey', emoji:'🍏', premium: true, tier: 'Premium' },
+  { id:'p_whi6', name:'Crown Royal Black', category:'Whiskey', emoji:'👑', premium: true, tier: 'Premium' },
+  { id:'p_whi7', name:'Screwball', category:'Whiskey', emoji:'🥜', premium: true, tier: 'Premium' },
+  { id:'p_gin1', name:'Hendricks', category:'Gin', emoji:'🥒', premium: true, tier: 'Premium' },
+  { id:'p_whi8', name:'American Honey', category:'Whiskey', emoji:'🍯', premium: true, tier: 'Premium' },
+  { id:'p_whi9', name:'Jameson', category:'Whiskey', emoji:'☘️', premium: true, tier: 'Premium' },
+  { id:'p_whi10', name:'Seagrams VO', category:'Whiskey', emoji:'🥃', premium: true, tier: 'Premium' },
+  { id:'p_whi11', name:'Jim Beam', category:'Whiskey', emoji:'🥃', premium: true, tier: 'Premium' },
+  { id:'p_whi12', name:'Jack Daniels', category:'Whiskey', emoji:'🥃', premium: true, tier: 'Premium' },
+  { id:'p_vod2', name:"Tito's", category:'Vodka', emoji:'🍸', premium: true, tier: 'Premium' },
+  { id:'p_vod3', name:'3 Olives Loopy', category:'Vodka', emoji:'🥣', premium: true, tier: 'Premium' },
+  { id:'p_liq3', name:'Jager', category:'Liqueur', emoji:'🦌', premium: true, tier: 'Premium' },
+  { id:'p_liq4', name:'Goldschlager', category:'Liqueur', emoji:'✨', premium: true, tier: 'Premium' },
+  { id:'p_vod4', name:'Pinnacle', category:'Vodka', emoji:'🍸', premium: true, tier: 'Premium' },
+  { id:'p_vod5', name:'Wave', category:'Vodka', emoji:'🌊', premium: true, tier: 'Premium' },
+
+  // --- TOP SHELF ($6.50) ---
+  { id:'t_vod1', name:'Grey Goose', category:'Vodka', emoji:'🦢', premium: true, tier: 'Top Shelf' },
+  { id:'t_teq1', name:'Espolon', category:'Tequila', emoji:'☠️', premium: true, tier: 'Top Shelf' },
+  { id:'t_gin1', name:'Tanqueray', category:'Gin', emoji:'🌿', premium: true, tier: 'Top Shelf' },
+  { id:'t_liq1', name:'Grand Marnier', category:'Liqueur', emoji:'🍊', premium: true, tier: 'Top Shelf' },
+  { id:'t_cog1', name:"D'usse", category:'Cognac', emoji:'🥃', premium: true, tier: 'Top Shelf' },
+  { id:'t_liq2', name:'Rumple Minze', category:'Liqueur', emoji:'🧊', premium: true, tier: 'Top Shelf' },
+  { id:'t_teq2', name:'Don Julio', category:'Tequila', emoji:'🌵', premium: true, tier: 'Top Shelf' },
+  { id:'t_bou1', name:"Maker's Mark", category:'Bourbon', emoji:'🥃', premium: true, tier: 'Top Shelf' },
+  { id:'t_bou2', name:'Knob Creek', category:'Bourbon', emoji:'🥃', premium: true, tier: 'Top Shelf' },
+  { id:'t_vod2', name:'Pink Whitney', category:'Vodka', emoji:'🍋', premium: true, tier: 'Top Shelf' },
+
+  // --- MIXERS & GARNISHES (Kept from original so drinks can be made) ---
   { id:'mix1', name:'Orange Juice', category:'Mixer', emoji:'🍊' },
   { id:'mix2', name:'Cranberry Juice', category:'Mixer', emoji:'🫐' },
   { id:'mix3', name:'Pineapple Juice', category:'Mixer', emoji:'🍍' },
@@ -534,6 +618,7 @@ const INVENTORY = [
   { id:'ext3', name:'Salt Rim', category:'Extra', emoji:'🧂' },
   { id:'ext4', name:'Sugar Rim', category:'Extra', emoji:'✨' }
 ];
+
 
 const DEFAULT_DRINKS = [
   {
@@ -1052,3 +1137,10 @@ document.addEventListener('touchend', (e)=>{
 // Init when DOM is ready
 if(document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
+</script>
+</body>
+</html>
+    
